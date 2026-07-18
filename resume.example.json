@@ -1,0 +1,86 @@
+{
+  "name": "Your Name",
+  "title": "Software Engineer",
+  "language": "en",
+  "theme": {
+    "accent": "#7E2A3B"
+  },
+  "contact": {
+    "location": "City, Country",
+    "email": "you@example.com",
+    "phone": "+00 000 000 0000",
+    "github": "github.com/yourusername",
+    "githubUrl": "https://github.com/yourusername",
+    "linkedin": "linkedin.com/in/yourusername",
+    "linkedinUrl": "https://linkedin.com/in/yourusername",
+    "website": "yourwebsite.com",
+    "websiteUrl": "https://yourwebsite.com"
+  },
+  "summary": "Software engineer with experience building reliable, user-focused products. Strong in backend systems, modern web development, and cross-functional collaboration. Interested in solving meaningful problems with simple, maintainable software.",
+  "education": [
+    {
+      "institution": "University Name",
+      "degree": "B.Sc. in Computer Science",
+      "date": "2020 – 2024",
+      "location": "City, Country",
+      "details": "Relevant coursework, honors, or a concise academic highlight."
+    }
+  ],
+  "experience": [
+    {
+      "role": "Software Engineer",
+      "organization": "Company Name",
+      "date": "Jan 2024 – Present",
+      "location": "Remote",
+      "bullets": [
+        "Built and shipped a customer-facing feature that improved a measurable product or business outcome.",
+        "Designed maintainable services and collaborated with product, design, and engineering stakeholders."
+      ]
+    },
+    {
+      "role": "Software Engineering Intern",
+      "organization": "Previous Company",
+      "date": "Jun 2023 – Sep 2023",
+      "location": "City, Country",
+      "bullets": [
+        "Automated a recurring workflow and reduced manual effort for the team.",
+        "Added tests and documentation for a production system used by internal customers."
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Project Name",
+      "date": "2024",
+      "url": "https://github.com/yourusername/project",
+      "bullets": [
+        "Created a concise description focused on the problem, your contribution, and the result.",
+        "Built with TypeScript, React, Node.js, and PostgreSQL."
+      ]
+    }
+  ],
+  "skills": [
+    {
+      "category": "Programming",
+      "items": ["TypeScript", "Python", "Go"]
+    },
+    {
+      "category": "Backend",
+      "items": ["Node.js", "PostgreSQL", "REST APIs"]
+    },
+    {
+      "category": "Frontend",
+      "items": ["React", "HTML", "CSS"]
+    },
+    {
+      "category": "Languages",
+      "items": ["English (Professional)", "Your Language (Native)"]
+    }
+  ],
+  "additional": [
+    {
+      "name": "Open-source project or community",
+      "description": "Describe your contribution in one line."
+    }
+  ]
+}

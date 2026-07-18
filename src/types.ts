@@ -43,6 +43,11 @@ export interface AdditionalItem {
   description: string;
 }
 
+export interface CustomSection {
+  title: string;
+  items: AdditionalItem[];
+}
+
 export type LayoutDensity = "standard" | "compact" | "dense";
 
 export interface ResumeLayout {
@@ -75,4 +80,5 @@ export interface ResumeData {
   projects: Project[];
   skills: SkillGroup[];
   additional: AdditionalItem[];
+  customSections: CustomSection[];
 }

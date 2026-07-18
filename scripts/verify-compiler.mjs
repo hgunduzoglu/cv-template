@@ -84,7 +84,20 @@ const styledPdf = await compile(styled, "Custom styling and section titles");
 
 const legacy = structuredClone(example);
 delete legacy.sectionTitles;
-await compile(legacy, "Legacy data without custom section titles");
+delete legacy.customSections;
+await compile(legacy, "Legacy data without optional section fields");
+
+const customSections = structuredClone(example);
+customSections.additional = [];
+customSections.customSections = [
+  {
+    title: "Certifications",
+    items: [
+      { name: "Professional Certification", description: "Issuing organization · 2025" },
+    ],
+  },
+];
+await compile(customSections, "Resume with a custom section");
 
 const expanded = structuredClone(example);
 expanded.experience.push({

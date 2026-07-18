@@ -96,5 +96,6 @@
       "name": "Open-source project or community",
       "description": "Describe your contribution in one line."
     }
-  ]
+  ],
+  "customSections": []
 }

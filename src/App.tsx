@@ -11,6 +11,7 @@ import {
   RotateCcw,
   ShieldCheck,
   Sparkles,
+  Trash2,
   TriangleAlert,
 } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
@@ -19,6 +20,7 @@ import { createBlankResume, sampleResume } from "./sample";
 import { uiCopy, type UiCopy, type UiLanguage } from "./i18n";
 import type {
   AdditionalItem,
+  CustomSection,
   Education,
   Experience,
   LayoutDensity,
@@ -64,6 +66,7 @@ const normalizeData = (saved: Partial<ResumeData>): ResumeData => {
     projects: Array.isArray(saved.projects) ? saved.projects : fallback.projects,
     skills: Array.isArray(saved.skills) ? saved.skills : fallback.skills,
     additional: Array.isArray(saved.additional) ? saved.additional : fallback.additional,
+    customSections: Array.isArray(saved.customSections) ? saved.customSections : fallback.customSections,
   };
 };
 
@@ -192,6 +195,9 @@ export default function App() {
   const categoriesLabel = (count: number) => uiLanguage === "tr"
     ? `${count} kategori`
     : `${count} ${count === 1 ? "category" : "categories"}`;
+  const customSectionsLabel = (count: number) => uiLanguage === "tr"
+    ? `${count} özel bölüm`
+    : `${count} custom ${count === 1 ? "section" : "sections"}`;
 
   const update = <K extends keyof ResumeData>(key: K, value: ResumeData[K]) => {
     setData((current) => ({ ...current, [key]: value }));
@@ -301,7 +307,7 @@ export default function App() {
                   {activeStep === "experience" && entriesLabel(data.experience.length)}
                   {activeStep === "projects" && entriesLabel(data.projects.length)}
                   {activeStep === "skills" && categoriesLabel(data.skills.length)}
-                  {activeStep === "more" && entriesLabel(data.additional.length)}
+                  {activeStep === "more" && `${entriesLabel(data.additional.length)} · ${customSectionsLabel(data.customSections.length)}`}
                 </span>
               )}
             </header>
@@ -404,21 +410,29 @@ export default function App() {
             )}
 
             {activeStep === "more" && (
-              <RepeaterSection
-                copy={copy}
-                title={data.sectionTitles.additional}
-                titlePlaceholder={copy.additionalTitlePlaceholder}
-                onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, additional: title })}
-                empty={copy.additionalEmpty}
-                button={copy.addEntry}
-                onAdd={() => update("additional", [...data.additional, { name: "", description: "" }])}
-              >
-                {data.additional.map((item, index) => (
-                  <RepeaterCard key={index} language={uiLanguage} title={item.name || `${copy.entry} ${index + 1}`} index={index} total={data.additional.length} onMove={(direction) => update("additional", swap(data.additional, index, direction))} onRemove={() => update("additional", data.additional.filter((_, i) => i !== index))}>
-                    <AdditionalFields copy={copy} item={item} onChange={(next) => update("additional", data.additional.map((entry, i) => i === index ? next : entry))} />
-                  </RepeaterCard>
-                ))}
-              </RepeaterSection>
+              <>
+                <RepeaterSection
+                  copy={copy}
+                  title={data.sectionTitles.additional}
+                  titlePlaceholder={copy.additionalTitlePlaceholder}
+                  onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, additional: title })}
+                  empty={copy.additionalEmpty}
+                  button={copy.addEntry}
+                  onAdd={() => update("additional", [...data.additional, { name: "", description: "" }])}
+                >
+                  {data.additional.map((item, index) => (
+                    <RepeaterCard key={index} language={uiLanguage} title={item.name || `${copy.entry} ${index + 1}`} index={index} total={data.additional.length} onMove={(direction) => update("additional", swap(data.additional, index, direction))} onRemove={() => update("additional", data.additional.filter((_, i) => i !== index))}>
+                      <AdditionalFields copy={copy} item={item} onChange={(next) => update("additional", data.additional.map((entry, i) => i === index ? next : entry))} />
+                    </RepeaterCard>
+                  ))}
+                </RepeaterSection>
+                <CustomSectionsEditor
+                  copy={copy}
+                  language={uiLanguage}
+                  sections={data.customSections}
+                  onChange={(customSections) => update("customSections", customSections)}
+                />
+              </>
             )}
 
             <footer className="form-footer">
@@ -636,6 +650,124 @@ function RepeaterSection({
       {children}
       <button className="button button--add" type="button" onClick={onAdd}>
         <Plus size={16} /> {button}
+      </button>
+    </div>
+  );
+}
+
+function CustomSectionsEditor({
+  copy,
+  language,
+  sections,
+  onChange,
+}: {
+  copy: UiCopy;
+  language: UiLanguage;
+  sections: CustomSection[];
+  onChange: (sections: CustomSection[]) => void;
+}) {
+  return (
+    <section className="custom-sections" aria-labelledby="custom-sections-heading">
+      <header className="custom-sections__heading">
+        <div>
+          <strong id="custom-sections-heading">{copy.customSections}</strong>
+          <p>{copy.customSectionsDescription}</p>
+        </div>
+      </header>
+
+      <div className="custom-sections__list">
+        {sections.map((section, index) => (
+          <RepeaterCard
+            key={index}
+            language={language}
+            title={section.title || `${copy.customSection} ${index + 1}`}
+            index={index}
+            total={sections.length}
+            onMove={(direction) => onChange(swap(sections, index, direction))}
+            onRemove={() => onChange(sections.filter((_, itemIndex) => itemIndex !== index))}
+          >
+            <CustomSectionFields
+              copy={copy}
+              section={section}
+              onChange={(next) => onChange(sections.map((item, itemIndex) => itemIndex === index ? next : item))}
+            />
+          </RepeaterCard>
+        ))}
+      </div>
+
+      <button
+        className="button button--add"
+        type="button"
+        onClick={() => onChange([...sections, { title: "", items: [{ name: "", description: "" }] }])}
+      >
+        <Plus size={16} /> {copy.addCustomSection}
+      </button>
+    </section>
+  );
+}
+
+function CustomSectionFields({
+  copy,
+  section,
+  onChange,
+}: {
+  copy: UiCopy;
+  section: CustomSection;
+  onChange: (section: CustomSection) => void;
+}) {
+  return (
+    <div className="form-grid">
+      <Field
+        wide
+        label={copy.customSectionTitle}
+        value={section.title}
+        placeholder={copy.customSectionTitlePlaceholder}
+        onChange={(event) => onChange({ ...section, title: event.target.value })}
+      />
+
+      {section.items.map((item, index) => (
+        <div className="custom-section-item field--wide" key={index}>
+          <header>
+            <span className="field__label">{copy.customItem} {index + 1}</span>
+            <button
+              type="button"
+              className="icon-button icon-button--danger"
+              aria-label={`${copy.removeCustomItem} ${index + 1}`}
+              onClick={() => onChange({ ...section, items: section.items.filter((_, itemIndex) => itemIndex !== index) })}
+            >
+              <Trash2 size={15} />
+            </button>
+          </header>
+          <div className="custom-section-item__fields">
+            <Field
+              label={copy.customItemName}
+              value={item.name}
+              placeholder={copy.customItemNamePlaceholder}
+              onChange={(event) => onChange({
+                ...section,
+                items: section.items.map((entry, itemIndex) => itemIndex === index ? { ...entry, name: event.target.value } : entry),
+              })}
+            />
+            <TextArea
+              label={copy.description}
+              rows={2}
+              value={item.description}
+              placeholder={copy.customItemDescriptionPlaceholder}
+              onChange={(event) => onChange({
+                ...section,
+                items: section.items.map((entry, itemIndex) => itemIndex === index ? { ...entry, description: event.target.value } : entry),
+              })}
+            />
+          </div>
+        </div>
+      ))}
+
+      <button
+        className="inline-add"
+        type="button"
+        onClick={() => onChange({ ...section, items: [...section.items, { name: "", description: "" }] })}
+      >
+        <Plus size={15} /> {copy.addCustomItem}
       </button>
     </div>
   );

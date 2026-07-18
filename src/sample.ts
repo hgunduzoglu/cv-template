@@ -39,4 +39,5 @@ export const createBlankResume = (): ResumeData => ({
   projects: [],
   skills: [],
   additional: [],
+  customSections: [],
 });

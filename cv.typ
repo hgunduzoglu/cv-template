@@ -219,3 +219,18 @@
     [- #text(weight: 600)[#item.name]#if item.description != "" [ — #item.description]]
   }
 ]
+
+// ============================================================
+//  CUSTOM SECTIONS
+// ============================================================
+#for section in resume.at("customSections", default: ()) {
+  let items = section.at("items", default: ()).filter(item => (
+    item.at("name", default: "") != "" or item.at("description", default: "") != ""
+  ))
+  if section.at("title", default: "") != "" and items.len() > 0 [
+    #sec("user", section.title)
+    #for item in items {
+      [- #text(weight: 600)[#item.name]#if item.description != "" [ — #item.description]]
+    }
+  ]
+}

@@ -97,10 +97,29 @@ Alternatif olarak `cv.typ`, `resume.example.json`, `fonts/` ve `icons/` dosyalar
 - `projects`
 - `skills`
 - `additional`
+- `customSections`
 
 Deneyim ve proje kayıtlarında istenen sayıda `bullets` maddesi bulunabilir. Her yetenek grubunda özel bir `category` adı ve istenen sayıda `items` yer alır. Bu nedenle Programlama, Backend, Tasarım, Bulut, Araçlar veya Diller gibi kategoriler tamamen dinamiktir.
 
 CV'de görünen tüm ana başlıklar `sectionTitles` üzerinden yeniden adlandırılabilir. Kullanılabilen anahtarlar `summary`, `education`, `experience`, `projects`, `skills` ve `additional` alanlarıdır. Aynı ayarlar tarayıcı düzenleyicisinde de bulunur; böylece örneğin Open Source & Volunteer bölümü, Typst kaynağı değiştirilmeden Hobiler ve İlgi Alanları olarak kullanılabilir.
+
+`customSections` üzerinden CV'nin sonuna yeni bölümler eklenebilir. Her bölüm kendi başlığına ve istenen sayıda ad-açıklama kaydına sahiptir:
+
+```json
+{
+  "customSections": [
+    {
+      "title": "Sertifikalar",
+      "items": [
+        {
+          "name": "Mesleki Sertifika",
+          "description": "Sertifikayı veren kurum · 2025"
+        }
+      ]
+    }
+  ]
+}
+```
 
 EN/TR seçici yalnızca düzenleyici arayüzünü değiştirir. CV içeriği ve `language` alanı bağımsız kaldığı için şablon diğer Latin alfabeli dillerde de kullanılabilir.
 

@@ -97,10 +97,29 @@ The following collections accept any number of entries:
 - `projects`
 - `skills`
 - `additional`
+- `customSections`
 
 Experience and project entries accept any number of `bullets`. Each skill group has a custom `category` and any number of `items`, so categories such as Programming, Backend, Design, Cloud, Tools, or Languages are fully configurable.
 
 Every visible CV heading can be renamed through `sectionTitles`. The available keys are `summary`, `education`, `experience`, `projects`, `skills`, and `additional`. The browser editor exposes the same settings, so a section such as Open Source & Volunteer can become Hobbies & Interests without editing the Typst source.
+
+Additional sections can be appended through `customSections`. Each section has its own title and any number of name-description items:
+
+```json
+{
+  "customSections": [
+    {
+      "title": "Certifications",
+      "items": [
+        {
+          "name": "Professional Certification",
+          "description": "Issuing organization · 2025"
+        }
+      ]
+    }
+  ]
+}
+```
 
 The EN/TR selector changes the editor interface only. CV content and the `language` field remain independent, allowing the template to be used for other Latin-script languages as well.
 

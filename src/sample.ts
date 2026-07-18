@@ -8,6 +8,12 @@ export const createBlankResume = (): ResumeData => ({
   title: "",
   language: "en",
   theme: { accent: "#7E2A3B" },
+  layout: {
+    fontFamily: "Inter",
+    fontSize: 9.2,
+    density: "standard",
+    autoFit: true,
+  },
   contact: {
     location: "",
     email: "",

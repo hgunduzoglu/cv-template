@@ -11,6 +11,9 @@ A public-ready, single-column CV template built with [Typst](https://typst.app/)
 - ATS-friendly single-column layout with standard section headings
 - Data-driven template: edit JSON instead of layout code
 - Dynamic education, experience, project, skill, language, and community sections
+- Configurable font family, base font size, spacing density, and accent color
+- Accent color automatically applies to headings, rules, bullets, links, and icons
+- Optional one-page fitting with a readable 7.4 pt minimum
 - Browser-based PDF generation powered by Typst WebAssembly
 - Live preview and one-click PDF download
 - Local browser persistence with no account, database, or server-side storage
@@ -47,7 +50,7 @@ The static output is written to `dist/`.
    - Output directory: `dist`
 4. Deploy.
 
-No environment variables, API keys, backend, or database are required. Update the live-demo placeholder near the top of this README after deployment.
+No environment variables, API keys, backend, or database are required.
 
 ## Use the Typst template directly
 
@@ -99,6 +102,21 @@ Change the CV accent color through `theme.accent`:
 }
 ```
 
+Typography and spacing are controlled through `layout`:
+
+```json
+{
+  "layout": {
+    "fontFamily": "Inter",
+    "fontSize": 9.2,
+    "density": "standard",
+    "autoFit": true
+  }
+}
+```
+
+Bundled font choices are `Inter` and `JetBrains Mono`. Density can be `standard`, `compact`, or `dense`. When `autoFit` is enabled, the browser first preserves the selected style. If the document exceeds one page, it uses dense spacing and finds the largest font size that fits, without going below 7.4 pt. If the content still needs multiple pages at that limit, the builder shows a warning instead of making the CV unreadably small.
+
 ## Project structure
 
 ```text
@@ -115,6 +133,8 @@ Change the CV accent color through `theme.accent`:
 ## ATS notes
 
 The template uses a single reading column and conventional headings such as Summary, Education, Experience, and Skills. Icons are decorative SVGs and do not replace essential text. Contact details and URLs remain real PDF text.
+
+Reducing the font size can help with a slightly longer CV, but concise content is still the strongest ATS and readability choice. The one-page fitting option is a guardrail, not a guarantee for unlimited entries.
 
 For an extra check, extract the generated PDF text:
 

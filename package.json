@@ -3,6 +3,7 @@
   "private": false,
   "version": "1.0.0",
   "description": "An ATS-friendly Typst CV template with a private browser-based PDF builder.",
+  "author": "Hüsamettin Gündüzoğlu",
   "license": "MIT",
   "type": "module",
   "scripts": {

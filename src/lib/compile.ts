@@ -2,7 +2,7 @@ import { $typst } from "@myriaddreamin/typst.ts";
 import { TypstSnippet } from "@myriaddreamin/typst.ts/contrib/snippet";
 import compilerWasm from "@myriaddreamin/typst-ts-web-compiler/wasm?url";
 import templateSource from "../../cv.typ?raw";
-import type { ResumeData } from "../types";
+import type { LayoutDensity, ResumeData } from "../types";
 
 const encoder = new TextEncoder();
 
@@ -32,7 +32,16 @@ const iconUrls: Record<string, string> = {
 };
 
 let initialization: Promise<void> | undefined;
-let compileQueue = Promise.resolve<Uint8Array | undefined>(undefined);
+let compileQueue = Promise.resolve<CompileOutput | undefined>(undefined);
+
+export interface CompileOutput {
+  pdf: Uint8Array<ArrayBufferLike>;
+  pageCount: number;
+  appliedFontSize: number;
+  appliedDensity: LayoutDensity;
+  autoFitted: boolean;
+  fitFailed: boolean;
+}
 
 const fetchBytes = async (url: string) => {
   const response = await fetch(url);
@@ -65,7 +74,13 @@ const initializeCompiler = () => {
   return initialization;
 };
 
-const compileOnce = async (data: ResumeData) => {
+const readPageCount = (pdf: Uint8Array<ArrayBufferLike>) => {
+  const source = new TextDecoder("latin1").decode(pdf);
+  const match = source.match(/\/Type\s*\/Pages\s*\/Count\s+(\d+)/);
+  return match ? Number(match[1]) : 1;
+};
+
+const compilePdf = async (data: ResumeData) => {
   await initializeCompiler();
   await $typst.mapShadow(
     "/resume.example.json",
@@ -81,7 +96,80 @@ const compileOnce = async (data: ResumeData) => {
     throw new Error("Typst could not generate the PDF. Check the form fields and try again.");
   }
 
-  return pdf;
+  return {
+    pdf,
+    pageCount: readPageCount(pdf),
+  };
+};
+
+const withLayout = (
+  data: ResumeData,
+  fontSize: number,
+  density: LayoutDensity,
+): ResumeData => ({
+  ...data,
+  layout: {
+    ...data.layout,
+    fontSize: Number(fontSize.toFixed(2)),
+    density,
+  },
+});
+
+const asOutput = (
+  compiled: Awaited<ReturnType<typeof compilePdf>>,
+  data: ResumeData,
+  autoFitted = false,
+  fitFailed = false,
+): CompileOutput => ({
+  pdf: compiled.pdf,
+  pageCount: compiled.pageCount,
+  appliedFontSize: data.layout.fontSize,
+  appliedDensity: data.layout.density,
+  autoFitted,
+  fitFailed,
+});
+
+const compileOnce = async (data: ResumeData): Promise<CompileOutput> => {
+  const selected = await compilePdf(data);
+  if (!data.layout.autoFit || selected.pageCount <= 1) {
+    return asOutput(selected, data);
+  }
+
+  const minimumSize = 7.4;
+  const maximumSize = Math.max(minimumSize, Math.min(data.layout.fontSize, 9.2));
+  const denseMaximumData = withLayout(data, maximumSize, "dense");
+  const denseMaximum = await compilePdf(denseMaximumData);
+
+  if (denseMaximum.pageCount <= 1) {
+    return asOutput(denseMaximum, denseMaximumData, true);
+  }
+
+  const minimumData = withLayout(data, minimumSize, "dense");
+  const minimum = await compilePdf(minimumData);
+  if (minimum.pageCount > 1) {
+    return asOutput(minimum, minimumData, true, true);
+  }
+
+  let low = minimumSize;
+  let high = maximumSize;
+  let bestData = minimumData;
+  let best = minimum;
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const middle = (low + high) / 2;
+    const candidateData = withLayout(data, middle, "dense");
+    const candidate = await compilePdf(candidateData);
+
+    if (candidate.pageCount <= 1) {
+      low = middle;
+      bestData = candidateData;
+      best = candidate;
+    } else {
+      high = middle;
+    }
+  }
+
+  return asOutput(best, bestData, true);
 };
 
 export const compileResume = (data: ResumeData) => {

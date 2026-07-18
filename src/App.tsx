@@ -11,13 +11,15 @@ import {
   RotateCcw,
   ShieldCheck,
   Sparkles,
+  TriangleAlert,
 } from "lucide-react";
-import { compileResume } from "./lib/compile";
+import { compileResume, type CompileOutput } from "./lib/compile";
 import { createBlankResume, sampleResume } from "./sample";
 import type {
   AdditionalItem,
   Education,
   Experience,
+  LayoutDensity,
   Project,
   ResumeData,
   SkillGroup,
@@ -45,10 +47,26 @@ type StepId = (typeof steps)[number]["id"];
 
 const cloneSample = () => structuredClone(sampleResume);
 
+const normalizeData = (saved: Partial<ResumeData>): ResumeData => {
+  const fallback = cloneSample();
+  return {
+    ...fallback,
+    ...saved,
+    theme: { ...fallback.theme, ...saved.theme },
+    layout: { ...fallback.layout, ...saved.layout },
+    contact: { ...fallback.contact, ...saved.contact },
+    education: Array.isArray(saved.education) ? saved.education : fallback.education,
+    experience: Array.isArray(saved.experience) ? saved.experience : fallback.experience,
+    projects: Array.isArray(saved.projects) ? saved.projects : fallback.projects,
+    skills: Array.isArray(saved.skills) ? saved.skills : fallback.skills,
+    additional: Array.isArray(saved.additional) ? saved.additional : fallback.additional,
+  };
+};
+
 const loadInitialData = () => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    return saved ? (JSON.parse(saved) as ResumeData) : cloneSample();
+    return saved ? normalizeData(JSON.parse(saved) as Partial<ResumeData>) : cloneSample();
   } catch {
     return cloneSample();
   }
@@ -92,6 +110,7 @@ export default function App() {
   const [pdfUrl, setPdfUrl] = useState<string>();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
+  const [compileInfo, setCompileInfo] = useState<CompileOutput>();
   const latestCompile = useRef(0);
 
   const currentStepIndex = steps.findIndex((step) => step.id === activeStep);
@@ -107,14 +126,15 @@ export default function App() {
       setStatus("loading");
       setError("");
       try {
-        const bytes = await compileResume(data);
+        const result = await compileResume(data);
         if (compileId !== latestCompile.current) return;
 
-        const nextUrl = URL.createObjectURL(toPdfBlob(bytes));
+        const nextUrl = URL.createObjectURL(toPdfBlob(result.pdf));
         setPdfUrl((previous) => {
           if (previous) URL.revokeObjectURL(previous);
           return nextUrl;
         });
+        setCompileInfo(result);
         setStatus("ready");
       } catch (compileError) {
         if (compileId !== latestCompile.current) return;
@@ -149,8 +169,9 @@ export default function App() {
   const downloadPdf = async () => {
     try {
       setStatus("loading");
-      const bytes = await compileResume(data);
-      downloadBlob(toPdfBlob(bytes), safeFileName(data.name));
+      const result = await compileResume(data);
+      downloadBlob(toPdfBlob(result.pdf), safeFileName(data.name));
+      setCompileInfo(result);
       setStatus("ready");
     } catch (compileError) {
       setStatus("error");
@@ -262,7 +283,11 @@ export default function App() {
                 <Field label="LinkedIn URL" type="url" value={data.contact.linkedinUrl} placeholder="https://linkedin.com/in/username" onChange={(e) => update("contact", { ...data.contact, linkedinUrl: e.target.value })} />
                 <Field label="Website label" value={data.contact.website} placeholder="yourwebsite.com" onChange={(e) => update("contact", { ...data.contact, website: e.target.value })} />
                 <Field label="Website URL" type="url" value={data.contact.websiteUrl} placeholder="https://yourwebsite.com" onChange={(e) => update("contact", { ...data.contact, websiteUrl: e.target.value })} />
-                <Field label="Accent color" type="color" value={data.theme.accent} onChange={(e) => update("theme", { accent: e.target.value })} />
+                <DocumentStyleControls
+                  data={data}
+                  onAccentChange={(accent) => update("theme", { accent })}
+                  onLayoutChange={(layout) => update("layout", layout)}
+                />
                 <TextArea label="Professional summary" wide rows={5} value={data.summary} placeholder="Write a concise summary focused on your experience, strengths, and target role." hint="Aim for 2–4 sentences. Avoid first-person pronouns and generic claims." onChange={(e) => update("summary", e.target.value)} />
               </div>
             )}
@@ -361,9 +386,11 @@ export default function App() {
           <header className="preview-toolbar">
             <div>
               <strong>Live preview</strong>
-              <span className={`compile-status compile-status--${status}`}>
+              <span className={`compile-status compile-status--${status === "ready" && compileInfo && compileInfo.pageCount > 1 ? "warning" : status}`}>
                 {status === "loading" && <><LoaderCircle size={13} className="spin" /> Updating</>}
-                {status === "ready" && <><Check size={13} /> Ready</>}
+                {status === "ready" && compileInfo && compileInfo.pageCount > 1 && <><TriangleAlert size={13} /> {compileInfo.pageCount} pages</>}
+                {status === "ready" && compileInfo && compileInfo.pageCount <= 1 && <><Check size={13} /> 1 page{compileInfo.autoFitted ? ` · fitted ${compileInfo.appliedFontSize.toFixed(1)} pt` : ""}</>}
+                {status === "ready" && !compileInfo && <><Check size={13} /> Ready</>}
                 {status === "error" && <>Needs attention</>}
               </span>
             </div>
@@ -395,12 +422,121 @@ export default function App() {
           </div>
 
           <footer className="preview-footer">
-            <ShieldCheck size={14} />
-            No account, uploads, or server-side storage.
+            {compileInfo && compileInfo.pageCount > 1 ? (
+              <><TriangleAlert size={14} /> {compileInfo.fitFailed ? "Still over one page at the readable minimum. Shorten or remove content." : "This CV uses multiple pages. Enable one-page fitting or tighten the content."}</>
+            ) : (
+              <><ShieldCheck size={14} /> No account, uploads, or server-side storage.</>
+            )}
           </footer>
         </aside>
       </main>
     </div>
+  );
+}
+
+function DocumentStyleControls({
+  data,
+  onAccentChange,
+  onLayoutChange,
+}: {
+  data: ResumeData;
+  onAccentChange: (accent: string) => void;
+  onLayoutChange: (layout: ResumeData["layout"]) => void;
+}) {
+  const densities: { value: LayoutDensity; label: string }[] = [
+    { value: "standard", label: "Standard" },
+    { value: "compact", label: "Compact" },
+    { value: "dense", label: "Extra compact" },
+  ];
+
+  return (
+    <section className="document-style field--wide" aria-labelledby="document-style-heading">
+      <header>
+        <div>
+          <span className="field__label" id="document-style-heading">Document style</span>
+          <p>Change the complete PDF without editing the Typst layout.</p>
+        </div>
+        <span className="style-chip">A4 · ATS</span>
+      </header>
+
+      <div className="document-style__grid">
+        <label className="field">
+          <span className="field__label">Font family</span>
+          <select
+            value={data.layout.fontFamily}
+            onChange={(event) => onLayoutChange({
+              ...data.layout,
+              fontFamily: event.target.value as ResumeData["layout"]["fontFamily"],
+            })}
+          >
+            <option value="Inter">Inter</option>
+            <option value="JetBrains Mono">JetBrains Mono</option>
+          </select>
+        </label>
+
+        <label className="field">
+          <span className="field__label">Accent color</span>
+          <span className="color-control">
+            <input
+              type="color"
+              value={data.theme.accent}
+              aria-label="CV accent color"
+              onChange={(event) => onAccentChange(event.target.value)}
+            />
+            <output>{data.theme.accent.toUpperCase()}</output>
+          </span>
+        </label>
+
+        <label className="field field--wide">
+          <span className="range-heading">
+            <span className="field__label">Base font size</span>
+            <output>{data.layout.fontSize.toFixed(1)} pt</output>
+          </span>
+          <input
+            className="range-input"
+            type="range"
+            min="7.4"
+            max="10.5"
+            step="0.1"
+            value={data.layout.fontSize}
+            onChange={(event) => onLayoutChange({
+              ...data.layout,
+              fontSize: Number(event.target.value),
+            })}
+          />
+          <span className="range-labels"><span>More space</span><span>Larger text</span></span>
+        </label>
+
+        <div className="field field--wide">
+          <span className="field__label">Layout spacing</span>
+          <div className="density-options" role="group" aria-label="Layout spacing">
+            {densities.map((density) => (
+              <button
+                type="button"
+                key={density.value}
+                className={data.layout.density === density.value ? "is-selected" : ""}
+                aria-pressed={data.layout.density === density.value}
+                onClick={() => onLayoutChange({ ...data.layout, density: density.value })}
+              >
+                {density.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <label className="fit-toggle">
+        <input
+          type="checkbox"
+          checked={data.layout.autoFit}
+          onChange={(event) => onLayoutChange({ ...data.layout, autoFit: event.target.checked })}
+        />
+        <span>
+          <strong>Keep it to one page</strong>
+          <small>When needed, spacing and type shrink automatically, never below 7.4 pt.</small>
+        </span>
+      </label>
+    </section>
   );
 }
 

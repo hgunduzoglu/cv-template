@@ -43,11 +43,21 @@ export interface AdditionalItem {
   description: string;
 }
 
+export type LayoutDensity = "standard" | "compact" | "dense";
+
+export interface ResumeLayout {
+  fontFamily: "Inter" | "JetBrains Mono";
+  fontSize: number;
+  density: LayoutDensity;
+  autoFit: boolean;
+}
+
 export interface ResumeData {
   name: string;
   title: string;
   language: string;
   theme: { accent: string };
+  layout: ResumeLayout;
   contact: Contact;
   summary: string;
   education: Education[];

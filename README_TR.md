@@ -11,6 +11,9 @@
 - Standart bölüm başlıklarına sahip ATS uyumlu tek sütunlu düzen
 - Veri odaklı şablon: tasarım kodu yerine JSON dosyasını düzenleme
 - Dinamik eğitim, deneyim, proje, yetenek, dil ve topluluk bölümleri
+- Değiştirilebilir font ailesi, temel punto, yerleşim yoğunluğu ve vurgu rengi
+- Başlık, çizgi, madde işareti, link ve ikonların tamamına uygulanan ortak renk
+- Okunabilir 7.4 punto alt sınırına sahip isteğe bağlı tek sayfaya sığdırma
 - Typst WebAssembly ile tamamen tarayıcıda PDF oluşturma
 - Canlı önizleme ve tek tıkla PDF indirme
 - Hesap, veritabanı veya sunucu taraflı kayıt olmadan yerel taslak saklama
@@ -47,7 +50,7 @@ Statik çıktı `dist/` klasörüne yazılır.
    - Çıktı klasörü: `dist`
 4. Deploy işlemini başlatın.
 
-Ortam değişkeni, API anahtarı, backend veya veritabanı gerekmez. Yayından sonra bu README'nin başındaki canlı demo placeholder'ını güncelleyin.
+Ortam değişkeni, API anahtarı, backend veya veritabanı gerekmez.
 
 ## Typst şablonunu doğrudan kullanma
 
@@ -99,6 +102,21 @@ CV vurgu rengini `theme.accent` alanından değiştirebilirsiniz:
 }
 ```
 
+Font ve yerleşim ayarları `layout` alanından yönetilir:
+
+```json
+{
+  "layout": {
+    "fontFamily": "Inter",
+    "fontSize": 9.2,
+    "density": "standard",
+    "autoFit": true
+  }
+}
+```
+
+Projeye dahil edilmiş font seçenekleri `Inter` ve `JetBrains Mono`dur. Yerleşim yoğunluğu `standard`, `compact` veya `dense` olabilir. `autoFit` açıkken tarayıcı önce seçilen tasarımı korur. CV bir sayfayı aşarsa sıkı yerleşime geçer ve 7.4 puntonun altına inmeden tek sayfaya sığan en büyük puntoyu bulur. İçerik bu sınırda da birden fazla sayfaysa CV'yi okunamayacak kadar küçültmek yerine uyarı gösterir.
+
 ## Proje yapısı
 
 ```text
@@ -115,6 +133,8 @@ CV vurgu rengini `theme.accent` alanından değiştirebilirsiniz:
 ## ATS notları
 
 Şablon tek okuma sütunu ve Summary, Education, Experience, Skills gibi yaygın başlıklar kullanır. İkonlar yalnızca dekoratif SVG'lerdir ve önemli bilgilerin yerine geçmez. İletişim bilgileri ve URL'ler PDF içinde gerçek metin olarak kalır.
+
+Puntoyu küçültmek biraz daha uzun bir CV'yi sığdırabilir; ancak kısa ve sonuç odaklı içerik hem ATS hem okunabilirlik açısından daha güçlüdür. Tek sayfaya sığdırma seçeneği sınırsız içerik garantisi değil, güvenli bir yardımcıdır.
 
 Ek kontrol için oluşturulan PDF'nin metin katmanını çıkarabilirsiniz:
 

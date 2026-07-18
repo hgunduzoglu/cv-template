@@ -121,7 +121,7 @@ CV'de görünen tüm ana başlıklar `sectionTitles` üzerinden yeniden adlandı
 }
 ```
 
-EN/TR seçici yalnızca düzenleyici arayüzünü değiştirir. CV içeriği ve `language` alanı bağımsız kaldığı için şablon diğer Latin alfabeli dillerde de kullanılabilir.
+EN/TR seçici düzenleyici arayüzünü, değiştirilmemiş varsayılan bölüm başlıklarını ve varsayılan `language` değerini birlikte yerelleştirir. Özelleştirilmiş başlıklar ve kullanıcının girdiği içerikler korunur; alanlar diğer Latin alfabeli diller için de kullanılabilir.
 
 CV vurgu rengini `theme.accent` alanından değiştirebilirsiniz:
 

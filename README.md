@@ -121,7 +121,7 @@ Additional sections can be appended through `customSections`. Each section has i
 }
 ```
 
-The EN/TR selector changes the editor interface only. CV content and the `language` field remain independent, allowing the template to be used for other Latin-script languages as well.
+The EN/TR selector localizes the editor, untouched default section headings, and the default `language` value. Custom headings and user-entered content are preserved, and the fields can still be used for other Latin-script languages.
 
 Change the CV accent color through `theme.accent`:
 

@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
 import { compileResume, type CompileOutput } from "./lib/compile";
-import { createBlankResume, sampleResume } from "./sample";
+import { createBlankResume, defaultSectionTitles, sampleResume } from "./sample";
 import { uiCopy, type UiCopy, type UiLanguage } from "./i18n";
 import type {
   AdditionalItem,
@@ -85,6 +85,25 @@ const loadInitialUiLanguage = (): UiLanguage => {
   return navigator.language.toLocaleLowerCase().startsWith("tr") ? "tr" : "en";
 };
 
+const localizeResumeDefaults = (resume: ResumeData, language: UiLanguage): ResumeData => {
+  const sourceLanguage: UiLanguage = language === "tr" ? "en" : "tr";
+  const sourceTitles = defaultSectionTitles[sourceLanguage];
+  const targetTitles = defaultSectionTitles[language];
+  const sectionTitles = { ...resume.sectionTitles };
+
+  for (const key of Object.keys(sectionTitles) as (keyof ResumeData["sectionTitles"])[]) {
+    if (sectionTitles[key] === sourceTitles[key]) {
+      sectionTitles[key] = targetTitles[key];
+    }
+  }
+
+  return {
+    ...resume,
+    language: resume.language === sourceLanguage ? language : resume.language,
+    sectionTitles,
+  };
+};
+
 const swap = <T,>(items: T[], index: number, direction: -1 | 1) => {
   const target = index + direction;
   if (target < 0 || target >= items.length) return items;
@@ -118,8 +137,8 @@ const toPdfBlob = (bytes: Uint8Array<ArrayBufferLike>) => {
 };
 
 export default function App() {
-  const [data, setData] = useState<ResumeData>(loadInitialData);
   const [uiLanguage, setUiLanguage] = useState<UiLanguage>(loadInitialUiLanguage);
+  const [data, setData] = useState<ResumeData>(() => localizeResumeDefaults(loadInitialData(), uiLanguage));
   const [activeStep, setActiveStep] = useState<StepId>("profile");
   const [pdfUrl, setPdfUrl] = useState<string>();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -203,6 +222,11 @@ export default function App() {
     setData((current) => ({ ...current, [key]: value }));
   };
 
+  const changeUiLanguage = (language: UiLanguage) => {
+    setUiLanguage(language);
+    setData((current) => localizeResumeDefaults(current, language));
+  };
+
   const downloadPdf = async () => {
     try {
       setStatus("loading");
@@ -226,12 +250,12 @@ export default function App() {
   };
 
   const resetToExample = () => {
-    setData(cloneSample());
+    setData(localizeResumeDefaults(cloneSample(), uiLanguage));
     setActiveStep("profile");
   };
 
   const clearAll = () => {
-    setData(createBlankResume());
+    setData(localizeResumeDefaults(createBlankResume(), uiLanguage));
     setActiveStep("profile");
   };
 
@@ -241,7 +265,7 @@ export default function App() {
         <a className="brand" href="#top" aria-label={copy.brandHomeAria}>
           <span className="brand__mark"><FileText size={20} /></span>
           <span>
-            <strong>Typst CV Builder</strong>
+            <strong>{copy.brandName}</strong>
             <small>{copy.brandTagline}</small>
           </span>
         </a>
@@ -253,8 +277,8 @@ export default function App() {
 
         <div className="topbar__actions">
           <div className="language-switcher" role="group" aria-label={copy.languageSwitcher}>
-            <button type="button" className={uiLanguage === "en" ? "is-active" : ""} aria-pressed={uiLanguage === "en"} title={copy.english} onClick={() => setUiLanguage("en")}>EN</button>
-            <button type="button" className={uiLanguage === "tr" ? "is-active" : ""} aria-pressed={uiLanguage === "tr"} title={copy.turkish} onClick={() => setUiLanguage("tr")}>TR</button>
+            <button type="button" className={uiLanguage === "en" ? "is-active" : ""} aria-pressed={uiLanguage === "en"} title={copy.english} onClick={() => changeUiLanguage("en")}>EN</button>
+            <button type="button" className={uiLanguage === "tr" ? "is-active" : ""} aria-pressed={uiLanguage === "tr"} title={copy.turkish} onClick={() => changeUiLanguage("tr")}>TR</button>
           </div>
           <button className="button button--primary topbar__download" type="button" onClick={downloadPdf}>
             <Download size={17} />

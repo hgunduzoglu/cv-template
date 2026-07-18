@@ -3,6 +3,25 @@ import type { ResumeData } from "./types";
 
 export const sampleResume = sampleData as ResumeData;
 
+export const defaultSectionTitles = {
+  en: {
+    summary: "Summary",
+    education: "Education",
+    experience: "Experience",
+    projects: "Projects & Awards",
+    skills: "Skills & Languages",
+    additional: "Open Source & Volunteer",
+  },
+  tr: {
+    summary: "Özet",
+    education: "Eğitim",
+    experience: "Deneyim",
+    projects: "Projeler ve Ödüller",
+    skills: "Beceriler ve Diller",
+    additional: "Açık Kaynak ve Gönüllülük",
+  },
+} as const satisfies Record<"en" | "tr", ResumeData["sectionTitles"]>;
+
 export const createBlankResume = (): ResumeData => ({
   name: "",
   title: "",
@@ -14,14 +33,7 @@ export const createBlankResume = (): ResumeData => ({
     density: "standard",
     autoFit: true,
   },
-  sectionTitles: {
-    summary: "Summary",
-    education: "Education",
-    experience: "Experience",
-    projects: "Projects & Awards",
-    skills: "Skills & Languages",
-    additional: "Open Source & Volunteer",
-  },
+  sectionTitles: { ...defaultSectionTitles.en },
   contact: {
     location: "",
     email: "",

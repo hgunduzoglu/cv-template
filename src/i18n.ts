@@ -2,6 +2,7 @@ export type UiLanguage = "en" | "tr";
 
 const en = {
   brandHomeAria: "Typst CV Builder home",
+  brandName: "Typst CV Builder",
   brandTagline: "ATS-friendly by design",
   privacyNote: "Your data stays in this browser",
   downloadPdf: "Download PDF",
@@ -140,6 +141,7 @@ type Translation = { [Key in keyof typeof en]: string };
 
 const tr: Translation = {
   brandHomeAria: "Typst CV Oluşturucu ana sayfası",
+  brandName: "Typst CV Oluşturucu",
   brandTagline: "ATS uyumlu tasarım",
   privacyNote: "Verileriniz bu tarayıcıda kalır",
   downloadPdf: "PDF İndir",

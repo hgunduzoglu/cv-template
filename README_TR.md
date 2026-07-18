@@ -8,7 +8,7 @@
 
 ## Özellikler
 
-- Standart bölüm başlıklarına sahip ATS uyumlu tek sütunlu düzen
+- Değiştirilebilir bölüm başlıklarına sahip ATS uyumlu tek sütunlu düzen
 - Veri odaklı şablon: tasarım kodu yerine JSON dosyasını düzenleme
 - Dinamik eğitim, deneyim, proje, yetenek, dil ve topluluk bölümleri
 - Değiştirilebilir font ailesi, temel punto, yerleşim yoğunluğu ve vurgu rengi
@@ -16,6 +16,7 @@
 - Okunabilir 7.4 punto alt sınırına sahip isteğe bağlı tek sayfaya sığdırma
 - Typst WebAssembly ile tamamen tarayıcıda PDF oluşturma
 - Canlı önizleme ve tek tıkla PDF indirme
+- Dil tercihini hatırlayan Türkçe ve İngilizce düzenleyici arayüzü
 - Hesap, veritabanı veya sunucu taraflı kayıt olmadan yerel taslak saklama
 - Deploy seviyesinde kullanım bilgileri için [Vercel Web Analytics](https://vercel.com/docs/analytics) entegrasyonu
 - Tutarlı çıktı için projeye dahil edilmiş Inter ve JetBrains Mono yazı tipleri
@@ -79,6 +80,10 @@ Alternatif olarak `cv.typ`, `resume.example.json`, `fonts/` ve `icons/` dosyalar
 {
   "name": "Adınız Soyadınız",
   "title": "Yazılım Mühendisi",
+  "sectionTitles": {
+    "projects": "Seçili Çalışmalar",
+    "additional": "Hobiler ve İlgi Alanları"
+  },
   "contact": {
     "email": "siz@example.com"
   }
@@ -94,6 +99,10 @@ Alternatif olarak `cv.typ`, `resume.example.json`, `fonts/` ve `icons/` dosyalar
 - `additional`
 
 Deneyim ve proje kayıtlarında istenen sayıda `bullets` maddesi bulunabilir. Her yetenek grubunda özel bir `category` adı ve istenen sayıda `items` yer alır. Bu nedenle Programlama, Backend, Tasarım, Bulut, Araçlar veya Diller gibi kategoriler tamamen dinamiktir.
+
+CV'de görünen tüm ana başlıklar `sectionTitles` üzerinden yeniden adlandırılabilir. Kullanılabilen anahtarlar `summary`, `education`, `experience`, `projects`, `skills` ve `additional` alanlarıdır. Aynı ayarlar tarayıcı düzenleyicisinde de bulunur; böylece örneğin Open Source & Volunteer bölümü, Typst kaynağı değiştirilmeden Hobiler ve İlgi Alanları olarak kullanılabilir.
+
+EN/TR seçici yalnızca düzenleyici arayüzünü değiştirir. CV içeriği ve `language` alanı bağımsız kaldığı için şablon diğer Latin alfabeli dillerde de kullanılabilir.
 
 CV vurgu rengini `theme.accent` alanından değiştirebilirsiniz:
 

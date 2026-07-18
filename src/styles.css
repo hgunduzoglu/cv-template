@@ -123,7 +123,31 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
   font-weight: 600;
 }
 
-.topbar__download { justify-self: end; }
+.topbar__actions { justify-self: end; display: flex; align-items: center; gap: 10px; }
+
+.language-switcher {
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #eee8e5;
+  border-radius: 9px;
+}
+
+.language-switcher button {
+  min-width: 32px;
+  height: 30px;
+  padding: 0 7px;
+  color: var(--muted);
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  font: 600 10px "JetBrains Mono", monospace;
+}
+
+.language-switcher button:hover { color: var(--ink); }
+.language-switcher button.is-active { color: var(--accent); background: #fff; box-shadow: 0 2px 8px rgba(55, 35, 40, 0.08); }
 
 .builder {
   display: grid;
@@ -205,14 +229,22 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 .step-nav button:hover { background: rgba(255, 255, 255, 0.62); color: var(--ink); }
 .step-nav button.is-active { color: var(--accent); background: var(--accent-soft); }
 
-.step-nav button span {
+.step-nav__number {
   width: 18px;
   height: 18px;
+  flex: 0 0 18px;
   display: grid;
   place-items: center;
   border: 1px solid currentColor;
   border-radius: 50%;
   font: 500 9px "JetBrains Mono", monospace;
+}
+
+.step-nav__label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .form-surface {
@@ -437,7 +469,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, select:focus-
 
 @media (max-width: 640px) {
   .brand small, .topbar__download { display: none; }
-  .topbar { grid-template-columns: 1fr; }
+  .topbar { grid-template-columns: 1fr auto; }
   .editor-intro { display: block; }
   .editor-intro .text-button { margin-top: 12px; padding-left: 0; }
   .step-nav { overflow-x: auto; grid-template-columns: repeat(6, minmax(78px, 1fr)); }

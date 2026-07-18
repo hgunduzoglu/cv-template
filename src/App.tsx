@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Check,
   ChevronLeft,
@@ -16,6 +16,7 @@ import {
 import { Analytics } from "@vercel/analytics/react";
 import { compileResume, type CompileOutput } from "./lib/compile";
 import { createBlankResume, sampleResume } from "./sample";
+import { uiCopy, type UiCopy, type UiLanguage } from "./i18n";
 import type {
   AdditionalItem,
   Education,
@@ -34,14 +35,15 @@ import {
 } from "./components/Fields";
 
 const STORAGE_KEY = "typst-cv-builder:data:v1";
+const UI_LANGUAGE_KEY = "typst-cv-builder:ui-language";
 
 const steps = [
-  { id: "profile", label: "Profile" },
-  { id: "education", label: "Education" },
-  { id: "experience", label: "Experience" },
-  { id: "projects", label: "Projects" },
-  { id: "skills", label: "Skills" },
-  { id: "more", label: "More" },
+  { id: "profile" },
+  { id: "education" },
+  { id: "experience" },
+  { id: "projects" },
+  { id: "skills" },
+  { id: "more" },
 ] as const;
 
 type StepId = (typeof steps)[number]["id"];
@@ -55,6 +57,7 @@ const normalizeData = (saved: Partial<ResumeData>): ResumeData => {
     ...saved,
     theme: { ...fallback.theme, ...saved.theme },
     layout: { ...fallback.layout, ...saved.layout },
+    sectionTitles: { ...fallback.sectionTitles, ...saved.sectionTitles },
     contact: { ...fallback.contact, ...saved.contact },
     education: Array.isArray(saved.education) ? saved.education : fallback.education,
     experience: Array.isArray(saved.experience) ? saved.experience : fallback.experience,
@@ -71,6 +74,12 @@ const loadInitialData = () => {
   } catch {
     return cloneSample();
   }
+};
+
+const loadInitialUiLanguage = (): UiLanguage => {
+  const saved = localStorage.getItem(UI_LANGUAGE_KEY);
+  if (saved === "en" || saved === "tr") return saved;
+  return navigator.language.toLocaleLowerCase().startsWith("tr") ? "tr" : "en";
 };
 
 const swap = <T,>(items: T[], index: number, direction: -1 | 1) => {
@@ -107,12 +116,14 @@ const toPdfBlob = (bytes: Uint8Array<ArrayBufferLike>) => {
 
 export default function App() {
   const [data, setData] = useState<ResumeData>(loadInitialData);
+  const [uiLanguage, setUiLanguage] = useState<UiLanguage>(loadInitialUiLanguage);
   const [activeStep, setActiveStep] = useState<StepId>("profile");
   const [pdfUrl, setPdfUrl] = useState<string>();
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [error, setError] = useState("");
   const [compileInfo, setCompileInfo] = useState<CompileOutput>();
   const latestCompile = useRef(0);
+  const copy = uiCopy[uiLanguage];
 
   const currentStepIndex = steps.findIndex((step) => step.id === activeStep);
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
@@ -120,6 +131,11 @@ export default function App() {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }, [data]);
+
+  useEffect(() => {
+    localStorage.setItem(UI_LANGUAGE_KEY, uiLanguage);
+    document.documentElement.lang = uiLanguage;
+  }, [uiLanguage]);
 
   useEffect(() => {
     const compileId = ++latestCompile.current;
@@ -141,9 +157,9 @@ export default function App() {
         if (compileId !== latestCompile.current) return;
         setStatus("error");
         setError(
-          compileError instanceof Error
+          uiLanguage === "en" && compileError instanceof Error
             ? compileError.message
-            : "The preview could not be generated.",
+            : copy.previewError,
         );
       }
     }, 650);
@@ -158,10 +174,24 @@ export default function App() {
     [pdfUrl],
   );
 
-  const sectionTitle = useMemo(
-    () => steps.find((step) => step.id === activeStep)?.label ?? "Profile",
-    [activeStep],
-  );
+  const sectionTitlesByStep: Record<StepId, string> = {
+    profile: copy.profileStep,
+    education: data.sectionTitles.education || copy.educationStep,
+    experience: data.sectionTitles.experience || copy.experienceStep,
+    projects: data.sectionTitles.projects || copy.projectsStep,
+    skills: data.sectionTitles.skills || copy.skillsStep,
+    more: data.sectionTitles.additional || copy.moreStep,
+  };
+  const sectionTitle = sectionTitlesByStep[activeStep];
+  const stepLabel = uiLanguage === "tr"
+    ? `${steps.length} adımın ${currentStepIndex + 1}. adımı`
+    : `Step ${currentStepIndex + 1} of ${steps.length}`;
+  const entriesLabel = (count: number) => uiLanguage === "tr"
+    ? `${count} kayıt`
+    : `${count} ${count === 1 ? "entry" : "entries"}`;
+  const categoriesLabel = (count: number) => uiLanguage === "tr"
+    ? `${count} kategori`
+    : `${count} ${count === 1 ? "category" : "categories"}`;
 
   const update = <K extends keyof ResumeData>(key: K, value: ResumeData[K]) => {
     setData((current) => ({ ...current, [key]: value }));
@@ -177,7 +207,7 @@ export default function App() {
     } catch (compileError) {
       setStatus("error");
       setError(
-        compileError instanceof Error ? compileError.message : "The PDF could not be downloaded.",
+        uiLanguage === "en" && compileError instanceof Error ? compileError.message : copy.pdfError,
       );
     }
   };
@@ -202,43 +232,49 @@ export default function App() {
   return (
     <div className="app-shell">
       <header className="topbar">
-        <a className="brand" href="#top" aria-label="Typst CV Builder home">
+        <a className="brand" href="#top" aria-label={copy.brandHomeAria}>
           <span className="brand__mark"><FileText size={20} /></span>
           <span>
             <strong>Typst CV Builder</strong>
-            <small>ATS-friendly by design</small>
+            <small>{copy.brandTagline}</small>
           </span>
         </a>
 
         <div className="privacy-note">
           <ShieldCheck size={16} />
-          <span>Your data stays in this browser</span>
+          <span>{copy.privacyNote}</span>
         </div>
 
-        <button className="button button--primary topbar__download" type="button" onClick={downloadPdf}>
-          <Download size={17} />
-          Download PDF
-        </button>
+        <div className="topbar__actions">
+          <div className="language-switcher" role="group" aria-label={copy.languageSwitcher}>
+            <button type="button" className={uiLanguage === "en" ? "is-active" : ""} aria-pressed={uiLanguage === "en"} title={copy.english} onClick={() => setUiLanguage("en")}>EN</button>
+            <button type="button" className={uiLanguage === "tr" ? "is-active" : ""} aria-pressed={uiLanguage === "tr"} title={copy.turkish} onClick={() => setUiLanguage("tr")}>TR</button>
+          </div>
+          <button className="button button--primary topbar__download" type="button" onClick={downloadPdf}>
+            <Download size={17} />
+            {copy.downloadPdf}
+          </button>
+        </div>
       </header>
 
       <main className="builder" id="top">
-        <section className="editor-panel" aria-label="CV editor">
+        <section className="editor-panel" aria-label={copy.editorAria}>
           <div className="editor-intro">
             <div>
-              <span className="eyebrow"><Sparkles size={14} /> Build your CV</span>
-              <h1>Tell your story. Keep the format clean.</h1>
-              <p>Every section is optional, reorderable, and compiled locally with Typst.</p>
+              <span className="eyebrow"><Sparkles size={14} /> {copy.buildCv}</span>
+              <h1>{copy.heroTitle}</h1>
+              <p>{copy.heroDescription}</p>
             </div>
             <button className="text-button" type="button" onClick={resetToExample}>
-              <RotateCcw size={14} /> Reset example
+              <RotateCcw size={14} /> {copy.resetExample}
             </button>
           </div>
 
-          <div className="progress" aria-label={`Step ${currentStepIndex + 1} of ${steps.length}`}>
+          <div className="progress" aria-label={stepLabel}>
             <div className="progress__bar" style={{ width: `${progress}%` }} />
           </div>
 
-          <nav className="step-nav" aria-label="CV sections">
+          <nav className="step-nav" aria-label={copy.cvSectionsAria}>
             {steps.map((step, index) => (
               <button
                 type="button"
@@ -247,8 +283,8 @@ export default function App() {
                 aria-current={activeStep === step.id ? "step" : undefined}
                 onClick={() => setActiveStep(step.id)}
               >
-                <span>{index + 1}</span>
-                {step.label}
+                <span className="step-nav__number">{index + 1}</span>
+                <span className="step-nav__label">{sectionTitlesByStep[step.id]}</span>
               </button>
             ))}
           </nav>
@@ -256,52 +292,58 @@ export default function App() {
           <div className="form-surface">
             <header className="section-heading">
               <div>
-                <span>Step {currentStepIndex + 1} of {steps.length}</span>
+                <span>{stepLabel}</span>
                 <h2>{sectionTitle}</h2>
               </div>
               {activeStep !== "profile" && (
                 <span className="section-count">
-                  {activeStep === "education" && `${data.education.length} entries`}
-                  {activeStep === "experience" && `${data.experience.length} entries`}
-                  {activeStep === "projects" && `${data.projects.length} entries`}
-                  {activeStep === "skills" && `${data.skills.length} categories`}
-                  {activeStep === "more" && `${data.additional.length} entries`}
+                  {activeStep === "education" && entriesLabel(data.education.length)}
+                  {activeStep === "experience" && entriesLabel(data.experience.length)}
+                  {activeStep === "projects" && entriesLabel(data.projects.length)}
+                  {activeStep === "skills" && categoriesLabel(data.skills.length)}
+                  {activeStep === "more" && entriesLabel(data.additional.length)}
                 </span>
               )}
             </header>
 
             {activeStep === "profile" && (
               <div className="form-grid">
-                <Field label="Full name" value={data.name} placeholder="Your Name" onChange={(e) => update("name", e.target.value)} />
-                <Field label="Professional title" value={data.title} placeholder="Software Engineer" onChange={(e) => update("title", e.target.value)} />
-                <Field label="Location" value={data.contact.location} placeholder="City, Country" onChange={(e) => update("contact", { ...data.contact, location: e.target.value })} />
-                <Field label="Email" type="email" value={data.contact.email} placeholder="you@example.com" onChange={(e) => update("contact", { ...data.contact, email: e.target.value })} />
-                <Field label="Phone" value={data.contact.phone} placeholder="+00 000 000 0000" onChange={(e) => update("contact", { ...data.contact, phone: e.target.value })} />
-                <Field label="CV language code" value={data.language} placeholder="en" hint="Use an ISO code such as en, tr, de, or fr." onChange={(e) => update("language", e.target.value)} />
-                <Field label="GitHub label" value={data.contact.github} placeholder="github.com/username" onChange={(e) => update("contact", { ...data.contact, github: e.target.value })} />
-                <Field label="GitHub URL" type="url" value={data.contact.githubUrl} placeholder="https://github.com/username" onChange={(e) => update("contact", { ...data.contact, githubUrl: e.target.value })} />
-                <Field label="LinkedIn label" value={data.contact.linkedin} placeholder="linkedin.com/in/username" onChange={(e) => update("contact", { ...data.contact, linkedin: e.target.value })} />
-                <Field label="LinkedIn URL" type="url" value={data.contact.linkedinUrl} placeholder="https://linkedin.com/in/username" onChange={(e) => update("contact", { ...data.contact, linkedinUrl: e.target.value })} />
-                <Field label="Website label" value={data.contact.website} placeholder="yourwebsite.com" onChange={(e) => update("contact", { ...data.contact, website: e.target.value })} />
-                <Field label="Website URL" type="url" value={data.contact.websiteUrl} placeholder="https://yourwebsite.com" onChange={(e) => update("contact", { ...data.contact, websiteUrl: e.target.value })} />
+                <Field label={copy.fullName} value={data.name} placeholder={copy.yourName} onChange={(e) => update("name", e.target.value)} />
+                <Field label={copy.professionalTitle} value={data.title} placeholder={copy.softwareEngineer} onChange={(e) => update("title", e.target.value)} />
+                <Field label={copy.location} value={data.contact.location} placeholder={copy.cityCountry} onChange={(e) => update("contact", { ...data.contact, location: e.target.value })} />
+                <Field label={copy.email} type="email" value={data.contact.email} placeholder={copy.emailPlaceholder} onChange={(e) => update("contact", { ...data.contact, email: e.target.value })} />
+                <Field label={copy.phone} value={data.contact.phone} placeholder="+00 000 000 0000" onChange={(e) => update("contact", { ...data.contact, phone: e.target.value })} />
+                <Field label={copy.cvLanguageCode} value={data.language} placeholder="en" hint={copy.languageCodeHint} onChange={(e) => update("language", e.target.value)} />
+                <Field label={copy.githubLabel} value={data.contact.github} placeholder="github.com/username" onChange={(e) => update("contact", { ...data.contact, github: e.target.value })} />
+                <Field label={copy.githubUrl} type="url" value={data.contact.githubUrl} placeholder="https://github.com/username" onChange={(e) => update("contact", { ...data.contact, githubUrl: e.target.value })} />
+                <Field label={copy.linkedinLabel} value={data.contact.linkedin} placeholder="linkedin.com/in/username" onChange={(e) => update("contact", { ...data.contact, linkedin: e.target.value })} />
+                <Field label={copy.linkedinUrl} type="url" value={data.contact.linkedinUrl} placeholder="https://linkedin.com/in/username" onChange={(e) => update("contact", { ...data.contact, linkedinUrl: e.target.value })} />
+                <Field label={copy.websiteLabel} value={data.contact.website} placeholder="yourwebsite.com" onChange={(e) => update("contact", { ...data.contact, website: e.target.value })} />
+                <Field label={copy.websiteUrl} type="url" value={data.contact.websiteUrl} placeholder="https://yourwebsite.com" onChange={(e) => update("contact", { ...data.contact, websiteUrl: e.target.value })} />
                 <DocumentStyleControls
                   data={data}
+                  copy={copy}
                   onAccentChange={(accent) => update("theme", { accent })}
                   onLayoutChange={(layout) => update("layout", layout)}
                 />
-                <TextArea label="Professional summary" wide rows={5} value={data.summary} placeholder="Write a concise summary focused on your experience, strengths, and target role." hint="Aim for 2–4 sentences. Avoid first-person pronouns and generic claims." onChange={(e) => update("summary", e.target.value)} />
+                <Field label={copy.summarySectionTitle} wide value={data.sectionTitles.summary} placeholder={copy.summary} onChange={(e) => update("sectionTitles", { ...data.sectionTitles, summary: e.target.value })} />
+                <TextArea label={copy.professionalSummary} wide rows={5} value={data.summary} placeholder={copy.summaryPlaceholder} hint={copy.summaryHint} onChange={(e) => update("summary", e.target.value)} />
               </div>
             )}
 
             {activeStep === "education" && (
               <RepeaterSection
-                empty="Add your education, certification, or training history."
-                button="Add education"
+                copy={copy}
+                title={data.sectionTitles.education}
+                titlePlaceholder={copy.educationStep}
+                onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, education: title })}
+                empty={copy.educationEmpty}
+                button={copy.addEducation}
                 onAdd={() => update("education", [...data.education, { institution: "", degree: "", date: "", location: "", details: "" }])}
               >
                 {data.education.map((item, index) => (
-                  <RepeaterCard key={index} title={item.institution || `Education ${index + 1}`} index={index} total={data.education.length} onMove={(direction) => update("education", swap(data.education, index, direction))} onRemove={() => update("education", data.education.filter((_, i) => i !== index))}>
-                    <EducationFields item={item} onChange={(next) => update("education", data.education.map((entry, i) => i === index ? next : entry))} />
+                  <RepeaterCard key={index} language={uiLanguage} title={item.institution || `${copy.educationEntry} ${index + 1}`} index={index} total={data.education.length} onMove={(direction) => update("education", swap(data.education, index, direction))} onRemove={() => update("education", data.education.filter((_, i) => i !== index))}>
+                    <EducationFields copy={copy} item={item} onChange={(next) => update("education", data.education.map((entry, i) => i === index ? next : entry))} />
                   </RepeaterCard>
                 ))}
               </RepeaterSection>
@@ -309,13 +351,17 @@ export default function App() {
 
             {activeStep === "experience" && (
               <RepeaterSection
-                empty="Add a role and describe outcomes, not just responsibilities."
-                button="Add experience"
+                copy={copy}
+                title={data.sectionTitles.experience}
+                titlePlaceholder={copy.experienceStep}
+                onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, experience: title })}
+                empty={copy.experienceEmpty}
+                button={copy.addExperience}
                 onAdd={() => update("experience", [...data.experience, { role: "", organization: "", date: "", location: "", bullets: [""] }])}
               >
                 {data.experience.map((item, index) => (
-                  <RepeaterCard key={index} title={item.role || `Experience ${index + 1}`} index={index} total={data.experience.length} onMove={(direction) => update("experience", swap(data.experience, index, direction))} onRemove={() => update("experience", data.experience.filter((_, i) => i !== index))}>
-                    <ExperienceFields item={item} onChange={(next) => update("experience", data.experience.map((entry, i) => i === index ? next : entry))} />
+                  <RepeaterCard key={index} language={uiLanguage} title={item.role || `${copy.experienceEntry} ${index + 1}`} index={index} total={data.experience.length} onMove={(direction) => update("experience", swap(data.experience, index, direction))} onRemove={() => update("experience", data.experience.filter((_, i) => i !== index))}>
+                    <ExperienceFields copy={copy} language={uiLanguage} item={item} onChange={(next) => update("experience", data.experience.map((entry, i) => i === index ? next : entry))} />
                   </RepeaterCard>
                 ))}
               </RepeaterSection>
@@ -323,13 +369,17 @@ export default function App() {
 
             {activeStep === "projects" && (
               <RepeaterSection
-                empty="Add a project, award, publication, or meaningful side project."
-                button="Add project"
+                copy={copy}
+                title={data.sectionTitles.projects}
+                titlePlaceholder={copy.projectsTitlePlaceholder}
+                onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, projects: title })}
+                empty={copy.projectsEmpty}
+                button={copy.addProject}
                 onAdd={() => update("projects", [...data.projects, { name: "", date: "", url: "", bullets: [""] }])}
               >
                 {data.projects.map((item, index) => (
-                  <RepeaterCard key={index} title={item.name || `Project ${index + 1}`} index={index} total={data.projects.length} onMove={(direction) => update("projects", swap(data.projects, index, direction))} onRemove={() => update("projects", data.projects.filter((_, i) => i !== index))}>
-                    <ProjectFields item={item} onChange={(next) => update("projects", data.projects.map((entry, i) => i === index ? next : entry))} />
+                  <RepeaterCard key={index} language={uiLanguage} title={item.name || `${copy.projectEntry} ${index + 1}`} index={index} total={data.projects.length} onMove={(direction) => update("projects", swap(data.projects, index, direction))} onRemove={() => update("projects", data.projects.filter((_, i) => i !== index))}>
+                    <ProjectFields copy={copy} language={uiLanguage} item={item} onChange={(next) => update("projects", data.projects.map((entry, i) => i === index ? next : entry))} />
                   </RepeaterCard>
                 ))}
               </RepeaterSection>
@@ -337,13 +387,17 @@ export default function App() {
 
             {activeStep === "skills" && (
               <RepeaterSection
-                empty="Create any categories you need: Programming, Tools, Languages, Cloud, and more."
-                button="Add skill category"
+                copy={copy}
+                title={data.sectionTitles.skills}
+                titlePlaceholder={copy.skillsTitlePlaceholder}
+                onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, skills: title })}
+                empty={copy.skillsEmpty}
+                button={copy.addSkillCategory}
                 onAdd={() => update("skills", [...data.skills, { category: "", items: [""] }])}
               >
                 {data.skills.map((item, index) => (
-                  <RepeaterCard key={index} title={item.category || `Skill category ${index + 1}`} index={index} total={data.skills.length} onMove={(direction) => update("skills", swap(data.skills, index, direction))} onRemove={() => update("skills", data.skills.filter((_, i) => i !== index))}>
-                    <SkillFields item={item} onChange={(next) => update("skills", data.skills.map((entry, i) => i === index ? next : entry))} />
+                  <RepeaterCard key={index} language={uiLanguage} title={item.category || `${copy.skillCategoryEntry} ${index + 1}`} index={index} total={data.skills.length} onMove={(direction) => update("skills", swap(data.skills, index, direction))} onRemove={() => update("skills", data.skills.filter((_, i) => i !== index))}>
+                    <SkillFields copy={copy} language={uiLanguage} item={item} onChange={(next) => update("skills", data.skills.map((entry, i) => i === index ? next : entry))} />
                   </RepeaterCard>
                 ))}
               </RepeaterSection>
@@ -351,13 +405,17 @@ export default function App() {
 
             {activeStep === "more" && (
               <RepeaterSection
-                empty="Optionally add open-source work, volunteering, or community involvement."
-                button="Add entry"
+                copy={copy}
+                title={data.sectionTitles.additional}
+                titlePlaceholder={copy.additionalTitlePlaceholder}
+                onTitleChange={(title) => update("sectionTitles", { ...data.sectionTitles, additional: title })}
+                empty={copy.additionalEmpty}
+                button={copy.addEntry}
                 onAdd={() => update("additional", [...data.additional, { name: "", description: "" }])}
               >
                 {data.additional.map((item, index) => (
-                  <RepeaterCard key={index} title={item.name || `Entry ${index + 1}`} index={index} total={data.additional.length} onMove={(direction) => update("additional", swap(data.additional, index, direction))} onRemove={() => update("additional", data.additional.filter((_, i) => i !== index))}>
-                    <AdditionalFields item={item} onChange={(next) => update("additional", data.additional.map((entry, i) => i === index ? next : entry))} />
+                  <RepeaterCard key={index} language={uiLanguage} title={item.name || `${copy.entry} ${index + 1}`} index={index} total={data.additional.length} onMove={(direction) => update("additional", swap(data.additional, index, direction))} onRemove={() => update("additional", data.additional.filter((_, i) => i !== index))}>
+                    <AdditionalFields copy={copy} item={item} onChange={(next) => update("additional", data.additional.map((entry, i) => i === index ? next : entry))} />
                   </RepeaterCard>
                 ))}
               </RepeaterSection>
@@ -365,17 +423,17 @@ export default function App() {
 
             <footer className="form-footer">
               <button className="button button--ghost" type="button" disabled={currentStepIndex === 0} onClick={() => setActiveStep(steps[currentStepIndex - 1].id)}>
-                <ChevronLeft size={16} /> Back
+                <ChevronLeft size={16} /> {copy.back}
               </button>
               <div className="form-footer__end">
-                <button className="text-button text-button--danger" type="button" onClick={clearAll}>Clear all</button>
+                <button className="text-button text-button--danger" type="button" onClick={clearAll}>{copy.clearAll}</button>
                 {currentStepIndex < steps.length - 1 ? (
                   <button className="button button--primary" type="button" onClick={() => setActiveStep(steps[currentStepIndex + 1].id)}>
-                    Continue <ChevronRight size={16} />
+                    {copy.continue} <ChevronRight size={16} />
                   </button>
                 ) : (
                   <button className="button button--primary" type="button" onClick={downloadPdf}>
-                    <Download size={16} /> Download PDF
+                    <Download size={16} /> {copy.downloadPdf}
                   </button>
                 )}
               </div>
@@ -383,20 +441,20 @@ export default function App() {
           </div>
         </section>
 
-        <aside className="preview-panel" aria-label="CV preview">
+        <aside className="preview-panel" aria-label={copy.previewAria}>
           <header className="preview-toolbar">
             <div>
-              <strong>Live preview</strong>
+              <strong>{copy.livePreview}</strong>
               <span className={`compile-status compile-status--${status === "ready" && compileInfo && compileInfo.pageCount > 1 ? "warning" : status}`}>
-                {status === "loading" && <><LoaderCircle size={13} className="spin" /> Updating</>}
-                {status === "ready" && compileInfo && compileInfo.pageCount > 1 && <><TriangleAlert size={13} /> {compileInfo.pageCount} pages</>}
-                {status === "ready" && compileInfo && compileInfo.pageCount <= 1 && <><Check size={13} /> 1 page{compileInfo.autoFitted ? ` · fitted ${compileInfo.appliedFontSize.toFixed(1)} pt` : ""}</>}
-                {status === "ready" && !compileInfo && <><Check size={13} /> Ready</>}
-                {status === "error" && <>Needs attention</>}
+                {status === "loading" && <><LoaderCircle size={13} className="spin" /> {copy.updating}</>}
+                {status === "ready" && compileInfo && compileInfo.pageCount > 1 && <><TriangleAlert size={13} /> {uiLanguage === "tr" ? `${compileInfo.pageCount} sayfa` : `${compileInfo.pageCount} pages`}</>}
+                {status === "ready" && compileInfo && compileInfo.pageCount <= 1 && <><Check size={13} /> {uiLanguage === "tr" ? "1 sayfa" : "1 page"}{compileInfo.autoFitted ? ` · ${uiLanguage === "tr" ? "sığdırıldı" : "fitted"} ${compileInfo.appliedFontSize.toFixed(1)} pt` : ""}</>}
+                {status === "ready" && !compileInfo && <><Check size={13} /> {copy.ready}</>}
+                {status === "error" && <>{copy.needsAttention}</>}
               </span>
             </div>
             <div className="preview-actions">
-              <button className="icon-button icon-button--labeled" type="button" onClick={downloadJson} title="Download editable data">
+              <button className="icon-button icon-button--labeled" type="button" onClick={downloadJson} title={copy.downloadEditableData}>
                 <FileJson size={16} /> JSON
               </button>
               <button className="button button--primary button--small" type="button" onClick={downloadPdf}>
@@ -408,25 +466,25 @@ export default function App() {
           <div className="preview-stage">
             {status === "error" ? (
               <div className="preview-message preview-message--error">
-                <strong>Preview unavailable</strong>
+                <strong>{copy.previewUnavailable}</strong>
                 <p>{error}</p>
               </div>
             ) : pdfUrl ? (
-              <iframe title="Generated CV preview" src={`${pdfUrl}#toolbar=0&navpanes=0&view=FitH`} />
+              <iframe title={copy.generatedPreview} src={`${pdfUrl}#toolbar=0&navpanes=0&view=FitH`} />
             ) : (
               <div className="preview-message">
                 <LoaderCircle size={26} className="spin" />
-                <strong>Preparing the Typst compiler</strong>
-                <p>The first preview may take a moment. Future updates are faster.</p>
+                <strong>{copy.preparingCompiler}</strong>
+                <p>{copy.compilerWait}</p>
               </div>
             )}
           </div>
 
           <footer className="preview-footer">
             {compileInfo && compileInfo.pageCount > 1 ? (
-              <><TriangleAlert size={14} /> {compileInfo.fitFailed ? "Still over one page at the readable minimum. Shorten or remove content." : "This CV uses multiple pages. Enable one-page fitting or tighten the content."}</>
+              <><TriangleAlert size={14} /> {compileInfo.fitFailed ? copy.fitFailed : copy.multiplePages}</>
             ) : (
-              <><ShieldCheck size={14} /> No account, uploads, or server-side storage.</>
+              <><ShieldCheck size={14} /> {copy.noStorage}</>
             )}
           </footer>
         </aside>
@@ -438,32 +496,34 @@ export default function App() {
 
 function DocumentStyleControls({
   data,
+  copy,
   onAccentChange,
   onLayoutChange,
 }: {
   data: ResumeData;
+  copy: UiCopy;
   onAccentChange: (accent: string) => void;
   onLayoutChange: (layout: ResumeData["layout"]) => void;
 }) {
   const densities: { value: LayoutDensity; label: string }[] = [
-    { value: "standard", label: "Standard" },
-    { value: "compact", label: "Compact" },
-    { value: "dense", label: "Extra compact" },
+    { value: "standard", label: copy.standard },
+    { value: "compact", label: copy.compact },
+    { value: "dense", label: copy.extraCompact },
   ];
 
   return (
     <section className="document-style field--wide" aria-labelledby="document-style-heading">
       <header>
         <div>
-          <span className="field__label" id="document-style-heading">Document style</span>
-          <p>Change the complete PDF without editing the Typst layout.</p>
+          <span className="field__label" id="document-style-heading">{copy.documentStyle}</span>
+          <p>{copy.documentStyleDescription}</p>
         </div>
         <span className="style-chip">A4 · ATS</span>
       </header>
 
       <div className="document-style__grid">
         <label className="field">
-          <span className="field__label">Font family</span>
+          <span className="field__label">{copy.fontFamily}</span>
           <select
             value={data.layout.fontFamily}
             onChange={(event) => onLayoutChange({
@@ -477,12 +537,12 @@ function DocumentStyleControls({
         </label>
 
         <label className="field">
-          <span className="field__label">Accent color</span>
+          <span className="field__label">{copy.accentColor}</span>
           <span className="color-control">
             <input
               type="color"
               value={data.theme.accent}
-              aria-label="CV accent color"
+              aria-label={copy.accentColorAria}
               onChange={(event) => onAccentChange(event.target.value)}
             />
             <output>{data.theme.accent.toUpperCase()}</output>
@@ -491,7 +551,7 @@ function DocumentStyleControls({
 
         <label className="field field--wide">
           <span className="range-heading">
-            <span className="field__label">Base font size</span>
+            <span className="field__label">{copy.baseFontSize}</span>
             <output>{data.layout.fontSize.toFixed(1)} pt</output>
           </span>
           <input
@@ -506,12 +566,12 @@ function DocumentStyleControls({
               fontSize: Number(event.target.value),
             })}
           />
-          <span className="range-labels"><span>More space</span><span>Larger text</span></span>
+          <span className="range-labels"><span>{copy.moreSpace}</span><span>{copy.largerText}</span></span>
         </label>
 
         <div className="field field--wide">
-          <span className="field__label">Layout spacing</span>
-          <div className="density-options" role="group" aria-label="Layout spacing">
+          <span className="field__label">{copy.layoutSpacing}</span>
+          <div className="density-options" role="group" aria-label={copy.layoutSpacing}>
             {densities.map((density) => (
               <button
                 type="button"
@@ -534,18 +594,44 @@ function DocumentStyleControls({
           onChange={(event) => onLayoutChange({ ...data.layout, autoFit: event.target.checked })}
         />
         <span>
-          <strong>Keep it to one page</strong>
-          <small>When needed, spacing and type shrink automatically, never below 7.4 pt.</small>
+          <strong>{copy.keepOnePage}</strong>
+          <small>{copy.keepOnePageHint}</small>
         </span>
       </label>
     </section>
   );
 }
 
-function RepeaterSection({ children, empty, button, onAdd }: { children: React.ReactNode; empty: string; button: string; onAdd: () => void }) {
+function RepeaterSection({
+  children,
+  copy,
+  title,
+  titlePlaceholder,
+  empty,
+  button,
+  onTitleChange,
+  onAdd,
+}: {
+  children: React.ReactNode;
+  copy: UiCopy;
+  title: string;
+  titlePlaceholder: string;
+  empty: string;
+  button: string;
+  onTitleChange: (title: string) => void;
+  onAdd: () => void;
+}) {
   const hasChildren = Array.isArray(children) ? children.length > 0 : Boolean(children);
   return (
     <div className="repeater-stack">
+      <Field
+        wide
+        label={copy.sectionTitle}
+        value={title}
+        placeholder={titlePlaceholder}
+        hint={copy.sectionTitleHint}
+        onChange={(event) => onTitleChange(event.target.value)}
+      />
       {!hasChildren && <EmptyState>{empty}</EmptyState>}
       {children}
       <button className="button button--add" type="button" onClick={onAdd}>
@@ -555,45 +641,45 @@ function RepeaterSection({ children, empty, button, onAdd }: { children: React.R
   );
 }
 
-function EducationFields({ item, onChange }: { item: Education; onChange: (item: Education) => void }) {
+function EducationFields({ copy, item, onChange }: { copy: UiCopy; item: Education; onChange: (item: Education) => void }) {
   return <div className="form-grid">
-    <Field label="Institution" value={item.institution} placeholder="University Name" onChange={(e) => onChange({ ...item, institution: e.target.value })} />
-    <Field label="Degree or certification" value={item.degree} placeholder="B.Sc. in Computer Science" onChange={(e) => onChange({ ...item, degree: e.target.value })} />
-    <Field label="Date" value={item.date} placeholder="2020 – 2024" onChange={(e) => onChange({ ...item, date: e.target.value })} />
-    <Field label="Location" value={item.location} placeholder="City, Country" onChange={(e) => onChange({ ...item, location: e.target.value })} />
-    <TextArea wide label="Details (optional)" rows={2} value={item.details} placeholder="Honors, relevant coursework, or a concise highlight." onChange={(e) => onChange({ ...item, details: e.target.value })} />
+    <Field label={copy.institution} value={item.institution} placeholder={copy.universityName} onChange={(e) => onChange({ ...item, institution: e.target.value })} />
+    <Field label={copy.degree} value={item.degree} placeholder={copy.degreePlaceholder} onChange={(e) => onChange({ ...item, degree: e.target.value })} />
+    <Field label={copy.date} value={item.date} placeholder="2020 – 2024" onChange={(e) => onChange({ ...item, date: e.target.value })} />
+    <Field label={copy.location} value={item.location} placeholder={copy.cityCountry} onChange={(e) => onChange({ ...item, location: e.target.value })} />
+    <TextArea wide label={copy.detailsOptional} rows={2} value={item.details} placeholder={copy.educationDetailsPlaceholder} onChange={(e) => onChange({ ...item, details: e.target.value })} />
   </div>;
 }
 
-function ExperienceFields({ item, onChange }: { item: Experience; onChange: (item: Experience) => void }) {
+function ExperienceFields({ copy, language, item, onChange }: { copy: UiCopy; language: UiLanguage; item: Experience; onChange: (item: Experience) => void }) {
   return <div className="form-grid">
-    <Field label="Role" value={item.role} placeholder="Software Engineer" onChange={(e) => onChange({ ...item, role: e.target.value })} />
-    <Field label="Organization" value={item.organization} placeholder="Company Name" onChange={(e) => onChange({ ...item, organization: e.target.value })} />
-    <Field label="Date" value={item.date} placeholder="Jan 2024 – Present" onChange={(e) => onChange({ ...item, date: e.target.value })} />
-    <Field label="Location" value={item.location} placeholder="Remote" onChange={(e) => onChange({ ...item, location: e.target.value })} />
-    <StringList label="Achievement bullets" values={item.bullets} placeholder="Start with an action verb and include a measurable result when possible." addLabel="Add bullet" onChange={(bullets) => onChange({ ...item, bullets })} />
+    <Field label={copy.role} value={item.role} placeholder={copy.softwareEngineer} onChange={(e) => onChange({ ...item, role: e.target.value })} />
+    <Field label={copy.organization} value={item.organization} placeholder={copy.companyName} onChange={(e) => onChange({ ...item, organization: e.target.value })} />
+    <Field label={copy.date} value={item.date} placeholder={copy.presentDatePlaceholder} onChange={(e) => onChange({ ...item, date: e.target.value })} />
+    <Field label={copy.location} value={item.location} placeholder={copy.remote} onChange={(e) => onChange({ ...item, location: e.target.value })} />
+    <StringList language={language} label={copy.achievementBullets} values={item.bullets} placeholder={copy.achievementPlaceholder} addLabel={copy.addBullet} onChange={(bullets) => onChange({ ...item, bullets })} />
   </div>;
 }
 
-function ProjectFields({ item, onChange }: { item: Project; onChange: (item: Project) => void }) {
+function ProjectFields({ copy, language, item, onChange }: { copy: UiCopy; language: UiLanguage; item: Project; onChange: (item: Project) => void }) {
   return <div className="form-grid">
-    <Field label="Project or award name" value={item.name} placeholder="Project Name" onChange={(e) => onChange({ ...item, name: e.target.value })} />
-    <Field label="Date" value={item.date} placeholder="2024 – Present" onChange={(e) => onChange({ ...item, date: e.target.value })} />
-    <Field wide label="Project URL (optional)" type="url" value={item.url} placeholder="https://github.com/username/project" onChange={(e) => onChange({ ...item, url: e.target.value })} />
-    <StringList label="Project bullets" values={item.bullets} placeholder="Describe the problem, your contribution, the stack, and the result." addLabel="Add bullet" onChange={(bullets) => onChange({ ...item, bullets })} />
+    <Field label={copy.projectOrAwardName} value={item.name} placeholder={copy.projectName} onChange={(e) => onChange({ ...item, name: e.target.value })} />
+    <Field label={copy.date} value={item.date} placeholder="2024 – Present" onChange={(e) => onChange({ ...item, date: e.target.value })} />
+    <Field wide label={copy.projectUrlOptional} type="url" value={item.url} placeholder="https://github.com/username/project" onChange={(e) => onChange({ ...item, url: e.target.value })} />
+    <StringList language={language} label={copy.projectBullets} values={item.bullets} placeholder={copy.projectBulletPlaceholder} addLabel={copy.addBullet} onChange={(bullets) => onChange({ ...item, bullets })} />
   </div>;
 }
 
-function SkillFields({ item, onChange }: { item: SkillGroup; onChange: (item: SkillGroup) => void }) {
+function SkillFields({ copy, language, item, onChange }: { copy: UiCopy; language: UiLanguage; item: SkillGroup; onChange: (item: SkillGroup) => void }) {
   return <div className="form-grid">
-    <Field wide label="Category name" value={item.category} placeholder="Programming, Cloud, Languages…" onChange={(e) => onChange({ ...item, category: e.target.value })} />
-    <StringList label="Skills" values={item.items} placeholder="TypeScript" addLabel="Add skill" onChange={(items) => onChange({ ...item, items })} />
+    <Field wide label={copy.categoryName} value={item.category} placeholder={copy.categoryPlaceholder} onChange={(e) => onChange({ ...item, category: e.target.value })} />
+    <StringList language={language} label={copy.skills} values={item.items} placeholder="TypeScript" addLabel={copy.addSkill} onChange={(items) => onChange({ ...item, items })} />
   </div>;
 }
 
-function AdditionalFields({ item, onChange }: { item: AdditionalItem; onChange: (item: AdditionalItem) => void }) {
+function AdditionalFields({ copy, item, onChange }: { copy: UiCopy; item: AdditionalItem; onChange: (item: AdditionalItem) => void }) {
   return <div className="form-grid">
-    <Field wide label="Project, organization, or community" value={item.name} placeholder="Open-source project or community" onChange={(e) => onChange({ ...item, name: e.target.value })} />
-    <TextArea wide label="Description" rows={3} value={item.description} placeholder="Describe your contribution in one concise line." onChange={(e) => onChange({ ...item, description: e.target.value })} />
+    <Field wide label={copy.additionalName} value={item.name} placeholder={copy.additionalNamePlaceholder} onChange={(e) => onChange({ ...item, name: e.target.value })} />
+    <TextArea wide label={copy.description} rows={3} value={item.description} placeholder={copy.additionalDescriptionPlaceholder} onChange={(e) => onChange({ ...item, description: e.target.value })} />
   </div>;
 }

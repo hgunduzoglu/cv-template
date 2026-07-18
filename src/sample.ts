@@ -14,6 +14,14 @@ export const createBlankResume = (): ResumeData => ({
     density: "standard",
     autoFit: true,
   },
+  sectionTitles: {
+    summary: "Summary",
+    education: "Education",
+    experience: "Experience",
+    projects: "Projects & Awards",
+    skills: "Skills & Languages",
+    additional: "Open Source & Volunteer",
+  },
   contact: {
     location: "",
     email: "",

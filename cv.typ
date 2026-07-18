@@ -62,6 +62,7 @@
   body,
 )
 #let dot = h(fs(3pt)) + text(fill: muted, size: fs(8.5pt))[·] + h(fs(3pt))
+#let section-title(key, fallback) = resume.at("sectionTitles", default: (:)).at(key, default: fallback)
 
 #let sec(icon, title) = {
   v(gap(5.2pt))
@@ -142,7 +143,7 @@
 //  SUMMARY
 // ============================================================
 #if resume.summary != "" [
-  #sec("user", "Summary")
+  #sec("user", section-title("summary", "Summary"))
   #resume.summary
 ]
 
@@ -150,7 +151,7 @@
 //  EDUCATION
 // ============================================================
 #if resume.education.len() > 0 [
-  #sec("graduation-cap", "Education")
+  #sec("graduation-cap", section-title("education", "Education"))
   #for (index, item) in resume.education.enumerate() {
     block(above: gap(4pt), below: gap(3pt))[
       #text(weight: 600, size: fs(10pt))[#item.institution — #item.degree]
@@ -166,7 +167,7 @@
 //  EXPERIENCE
 // ============================================================
 #if resume.experience.len() > 0 [
-  #sec("briefcase", "Experience")
+  #sec("briefcase", section-title("experience", "Experience"))
   #for (index, item) in resume.experience.enumerate() {
     dated-title(item.role, item.organization, item.date, location: item.location)
     bullet-list(item.bullets)
@@ -178,7 +179,7 @@
 //  PROJECTS & AWARDS
 // ============================================================
 #if resume.projects.len() > 0 [
-  #sec("trophy", "Projects & Awards")
+  #sec("trophy", section-title("projects", "Projects & Awards"))
   #for item in resume.projects {
     block(above: gap(5.5pt), below: gap(4pt))[
       #text(weight: 600, size: fs(9.8pt))[#item.name]
@@ -197,7 +198,7 @@
 //  SKILLS & LANGUAGES
 // ============================================================
 #if resume.skills.len() > 0 [
-  #sec("wrench", "Skills & Languages")
+  #sec("wrench", section-title("skills", "Skills & Languages"))
   #for item in resume.skills {
     grid(
       columns: (fs(120pt), 1fr),
@@ -213,7 +214,7 @@
 //  OPEN SOURCE & VOLUNTEER
 // ============================================================
 #if resume.additional.len() > 0 [
-  #sec("git-branch", "Open Source & Volunteer")
+  #sec("git-branch", section-title("additional", "Open Source & Volunteer"))
   #for item in resume.additional {
     [- #text(weight: 600)[#item.name]#if item.description != "" [ — #item.description]]
   }

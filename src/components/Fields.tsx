@@ -1,5 +1,6 @@
 import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import type { UiLanguage } from "../i18n";
 
 interface FieldProps {
   label: string;
@@ -41,6 +42,7 @@ interface RepeaterCardProps {
   title: string;
   index: number;
   total: number;
+  language: UiLanguage;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
   children: ReactNode;
@@ -50,6 +52,7 @@ export function RepeaterCard({
   title,
   index,
   total,
+  language,
   onMove,
   onRemove,
   children,
@@ -62,7 +65,7 @@ export function RepeaterCard({
           <button
             type="button"
             className="icon-button"
-            aria-label={`Move ${title} up`}
+            aria-label={language === "tr" ? `${title} kaydını yukarı taşı` : `Move ${title} up`}
             disabled={index === 0}
             onClick={() => onMove(-1)}
           >
@@ -71,7 +74,7 @@ export function RepeaterCard({
           <button
             type="button"
             className="icon-button"
-            aria-label={`Move ${title} down`}
+            aria-label={language === "tr" ? `${title} kaydını aşağı taşı` : `Move ${title} down`}
             disabled={index === total - 1}
             onClick={() => onMove(1)}
           >
@@ -80,7 +83,7 @@ export function RepeaterCard({
           <button
             type="button"
             className="icon-button icon-button--danger"
-            aria-label={`Remove ${title}`}
+            aria-label={language === "tr" ? `${title} kaydını kaldır` : `Remove ${title}`}
             onClick={onRemove}
           >
             <Trash2 size={15} />
@@ -97,6 +100,7 @@ interface StringListProps {
   values: string[];
   placeholder: string;
   addLabel: string;
+  language: UiLanguage;
   onChange: (values: string[]) => void;
 }
 
@@ -105,6 +109,7 @@ export function StringList({
   values,
   placeholder,
   addLabel,
+  language,
   onChange,
 }: StringListProps) {
   return (
@@ -125,7 +130,9 @@ export function StringList({
           <button
             type="button"
             className="icon-button icon-button--danger"
-            aria-label={`Remove ${label.toLowerCase()} ${index + 1}`}
+            aria-label={language === "tr"
+              ? `${label.toLocaleLowerCase("tr-TR")} ${index + 1} kaydını kaldır`
+              : `Remove ${label.toLowerCase()} ${index + 1}`}
             onClick={() => onChange(values.filter((_, itemIndex) => itemIndex !== index))}
           >
             <Trash2 size={15} />

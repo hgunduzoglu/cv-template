@@ -79,7 +79,12 @@ styled.theme.accent = "#1F6F5C";
 styled.layout.fontFamily = "JetBrains Mono";
 styled.layout.fontSize = 8.7;
 styled.layout.density = "compact";
-const styledPdf = await compile(styled, "Custom typography and color");
+styled.sectionTitles.additional = "Hobbies & Interests";
+const styledPdf = await compile(styled, "Custom styling and section titles");
+
+const legacy = structuredClone(example);
+delete legacy.sectionTitles;
+await compile(legacy, "Legacy data without custom section titles");
 
 const expanded = structuredClone(example);
 expanded.experience.push({

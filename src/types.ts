@@ -52,12 +52,22 @@ export interface ResumeLayout {
   autoFit: boolean;
 }
 
+export interface SectionTitles {
+  summary: string;
+  education: string;
+  experience: string;
+  projects: string;
+  skills: string;
+  additional: string;
+}
+
 export interface ResumeData {
   name: string;
   title: string;
   language: string;
   theme: { accent: string };
   layout: ResumeLayout;
+  sectionTitles: SectionTitles;
   contact: Contact;
   summary: string;
   education: Education[];

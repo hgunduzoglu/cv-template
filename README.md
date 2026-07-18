@@ -8,7 +8,7 @@ A single-column CV template built with [Typst](https://typst.app/), accompanied 
 
 ## Features
 
-- ATS-friendly single-column layout with standard section headings
+- ATS-friendly single-column layout with customizable section headings
 - Data-driven template: edit JSON instead of layout code
 - Dynamic education, experience, project, skill, language, and community sections
 - Configurable font family, base font size, spacing density, and accent color
@@ -16,6 +16,7 @@ A single-column CV template built with [Typst](https://typst.app/), accompanied 
 - Optional one-page fitting with a readable 7.4 pt minimum
 - Browser-based PDF generation powered by Typst WebAssembly
 - Live preview and one-click PDF download
+- Bilingual English/Turkish editor with a persistent language preference
 - Local browser persistence with no account, database, or server-side storage
 - [Vercel Web Analytics](https://vercel.com/docs/analytics) integration for deployment-level usage insights
 - Bundled Inter and JetBrains Mono fonts for reproducible output
@@ -79,6 +80,10 @@ All example values are intentionally generic placeholders. Replace the values in
 {
   "name": "Your Name",
   "title": "Software Engineer",
+  "sectionTitles": {
+    "projects": "Selected Work",
+    "additional": "Hobbies & Interests"
+  },
   "contact": {
     "email": "you@example.com"
   }
@@ -94,6 +99,10 @@ The following collections accept any number of entries:
 - `additional`
 
 Experience and project entries accept any number of `bullets`. Each skill group has a custom `category` and any number of `items`, so categories such as Programming, Backend, Design, Cloud, Tools, or Languages are fully configurable.
+
+Every visible CV heading can be renamed through `sectionTitles`. The available keys are `summary`, `education`, `experience`, `projects`, `skills`, and `additional`. The browser editor exposes the same settings, so a section such as Open Source & Volunteer can become Hobbies & Interests without editing the Typst source.
+
+The EN/TR selector changes the editor interface only. CV content and the `language` field remain independent, allowing the template to be used for other Latin-script languages as well.
 
 Change the CV accent color through `theme.accent`:
 

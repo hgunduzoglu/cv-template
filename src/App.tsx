@@ -13,6 +13,7 @@ import {
   Sparkles,
   TriangleAlert,
 } from "lucide-react";
+import { Analytics } from "@vercel/analytics/react";
 import { compileResume, type CompileOutput } from "./lib/compile";
 import { createBlankResume, sampleResume } from "./sample";
 import type {
@@ -430,6 +431,7 @@ export default function App() {
           </footer>
         </aside>
       </main>
+      <Analytics />
     </div>
   );
 }

@@ -2,7 +2,7 @@
 
 [Typst](https://typst.app/) ile hazırlanmış, herkese açık paylaşıma uygun tek sütunlu bir CV şablonu ve aynı şablonu tarayıcıda doldurup PDF olarak indirmeyi sağlayan basit bir CV oluşturucu.
 
-> Canlı demo: `https://projeniz.vercel.app`
+> Canlı demo: `https://cv-template-steel.vercel.app/`
 
 [English documentation](README.md)
 
@@ -132,12 +132,6 @@ Son PDF'yi başvuru yapacağınız sistemde ayrıca test edin. Hiçbir şablon t
 - [Lucide](https://lucide.dev/) ikonları
 
 Projeye dahil edilen yazı tipleri SIL Open Font License 1.1 altında dağıtılır. Telif bildirimleri ve lisans metni [`fonts/LICENSES.md`](fonts/LICENSES.md) içinde yer alır.
-
-## Herkese açık paylaşmadan önce
-
-- `https://projeniz.vercel.app` değerini yayınlanan adresle değiştirin.
-- `LICENSE` içindeki `[YOUR NAME]` alanını telif hakkı sahibiyle değiştirin.
-- `resume.example.json` içinde placeholder verileri koruyun; kişisel CV taslağınızı repoya göndermeyin.
 
 ## Lisans
 

@@ -2,7 +2,7 @@
 
 A public-ready, single-column CV template built with [Typst](https://typst.app/), plus a browser-based CV builder that previews and exports the same template as a PDF.
 
-> Live demo: `https://your-project.vercel.app`
+> Live demo: `https://cv-template-steel.vercel.app/`
 
 [Türkçe dokümantasyon](README_TR.md)
 
@@ -133,11 +133,6 @@ Always test the final PDF with the specific application system you plan to use. 
 
 The bundled fonts are distributed under the SIL Open Font License 1.1. Their copyright notices and license text are included in [`fonts/LICENSES.md`](fonts/LICENSES.md).
 
-## Before publishing
-
-- Replace `https://your-project.vercel.app` with your deployed URL.
-- Replace `[YOUR NAME]` in `LICENSE` with the copyright holder.
-- Keep placeholder data in `resume.example.json`; do not commit a private CV draft.
 
 ## License
 

@@ -1,8 +1,8 @@
 # ATS Uyumlu Typst CV
 
-[Typst](https://typst.app/) ile hazırlanmış, herkese açık paylaşıma uygun tek sütunlu bir CV şablonu ve aynı şablonu tarayıcıda doldurup PDF olarak indirmeyi sağlayan basit bir CV oluşturucu.
+[Typst](https://typst.app/) ile hazırlanmış tek sütunlu bir CV şablonu ve aynı şablonu canlı olarak önizleyip PDF biçiminde dışa aktaran tarayıcı tabanlı bir düzenleyici.
 
-> Canlı demo: `https://cv-template-steel.vercel.app/`
+> [Canlı demoyu açın](https://cv-template-steel.vercel.app/)
 
 [English documentation](README.md)
 
@@ -17,18 +17,21 @@
 - Typst WebAssembly ile tamamen tarayıcıda PDF oluşturma
 - Canlı önizleme ve tek tıkla PDF indirme
 - Hesap, veritabanı veya sunucu taraflı kayıt olmadan yerel taslak saklama
+- Deploy seviyesinde kullanım bilgileri için [Vercel Web Analytics](https://vercel.com/docs/analytics) entegrasyonu
 - Tutarlı çıktı için projeye dahil edilmiş Inter ve JetBrains Mono yazı tipleri
 - Vercel'da statik olarak yayınlanmaya hazır duyarlı arayüz
 
 ## Gizlilik
 
-Web oluşturucu tamamen tarayıcıda çalışır. CV bilgileri yalnızca kullanılan tarayıcının yerel depolama alanında tutulur ve bu proje tarafından hiçbir sunucuya yüklenmez. Tarayıcı verilerini temizlemek kaydedilmiş taslağı da siler.
+CV içeriği, oluşturulan belgeler ve kaydedilen taslaklar tarayıcıda kalır. Taslaklar yerel depolama alanında saklanır ve tarayıcının site verileri temizlenerek silinebilir. Yayındaki uygulamada Vercel Web Analytics bulunur; ancak uygulama CV form alanlarını veya oluşturulan belge içeriğini analytics olaylarına eklemez.
 
-## Web oluşturucuyu yerelde çalıştırma
+## Yerelde çalıştırma
 
-Gereksinim: Node.js 20 veya üzeri.
+GitHub üzerinde [kendi fork'unuzu oluşturun](https://github.com/hgunduzoglu/cv-template/fork) ve ardından yerel ortamınıza klonlayın. Node.js 20 veya üzeri gereklidir.
 
 ```bash
+git clone https://github.com/<github-kullanici-adiniz>/cv-template.git
+cd cv-template
 npm install
 npm run dev
 ```
@@ -41,16 +44,16 @@ npm run build
 
 Statik çıktı `dist/` klasörüne yazılır.
 
-## Vercel'a yayınlama
+## Kendi Vercel dağıtımınızı oluşturma
 
-1. Bu repoyu GitHub'a gönderin.
-2. Repoyu Vercel'a aktarın.
-3. Algılanan Vite ayarlarını koruyun veya şu değerleri kullanın:
+1. Repoyu [GitHub hesabınıza forklayın](https://github.com/hgunduzoglu/cv-template/fork).
+2. Oluşturduğunuz fork'u yeni bir Vercel projesine aktarın.
+3. Vercel'ın algıladığı Vite ayarlarını koruyun veya şu değerleri kullanın:
    - Build komutu: `npm run build`
    - Çıktı klasörü: `dist`
-4. Deploy işlemini başlatın.
+4. Projeyi yayınlayın.
 
-Ortam değişkeni, API anahtarı, backend veya veritabanı gerekmez.
+Ortam değişkeni, API anahtarı, backend veya veritabanı gerekmez. Vercel Web Analytics desteği uygulamaya dahildir; yeni projede etkinleştirmek için Vercel'ın [Web Analytics başlangıç rehberini](https://vercel.com/docs/analytics/quickstart) izleyebilirsiniz.
 
 ## Typst şablonunu doğrudan kullanma
 
@@ -152,6 +155,19 @@ Son PDF'yi başvuru yapacağınız sistemde ayrıca test edin. Hiçbir şablon t
 - [Lucide](https://lucide.dev/) ikonları
 
 Projeye dahil edilen yazı tipleri SIL Open Font License 1.1 altında dağıtılır. Telif bildirimleri ve lisans metni [`fonts/LICENSES.md`](fonts/LICENSES.md) içinde yer alır.
+
+## Hata bildirimleri ve katkılar
+
+Hata bildirimleri, özellik talepleri, erişilebilirlik iyileştirmeleri, dokümantasyon düzeltmeleri ve diğer yapıcı öneriler memnuniyetle karşılanır. Uygun durumlarda açık bir açıklama, beklenen davranış ve tekrar üretme adımlarıyla birlikte [GitHub issue kaydı açabilirsiniz](https://github.com/hgunduzoglu/cv-template/issues/new).
+
+Proje kod katkılarına da açıktır. Bir değişiklik önermek için:
+
+1. Repoyu forklayın ve değişikliğe odaklanan ayrı bir branch oluşturun.
+2. Herkese açık örnek verilere kişisel CV bilgileri eklemeden değişikliği uygulayın.
+3. `npm run check` komutunu çalıştırın ve oluşturulan PDF'nin geçerli kaldığını doğrulayın.
+4. Değişikliğin gerekçesini, uygulama biçimini ve kullanıcıya yansıyan davranış farklılıklarını açıklayan bir [pull request açın](https://github.com/hgunduzoglu/cv-template/pulls).
+
+Dar kapsamlı ve kolay incelenebilir pull request'ler değişikliklerin tartışılmasını, test edilmesini ve projeye dahil edilmesini kolaylaştırır.
 
 ## Lisans
 

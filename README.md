@@ -1,8 +1,8 @@
 # ATS-Friendly Typst CV
 
-A public-ready, single-column CV template built with [Typst](https://typst.app/), plus a browser-based CV builder that previews and exports the same template as a PDF.
+A single-column CV template built with [Typst](https://typst.app/), accompanied by a browser-based editor that generates a live preview and exports the same template as a PDF.
 
-> Live demo: `https://cv-template-steel.vercel.app/`
+> [Open the live demo](https://cv-template-steel.vercel.app/)
 
 [Türkçe dokümantasyon](README_TR.md)
 
@@ -17,18 +17,21 @@ A public-ready, single-column CV template built with [Typst](https://typst.app/)
 - Browser-based PDF generation powered by Typst WebAssembly
 - Live preview and one-click PDF download
 - Local browser persistence with no account, database, or server-side storage
+- [Vercel Web Analytics](https://vercel.com/docs/analytics) integration for deployment-level usage insights
 - Bundled Inter and JetBrains Mono fonts for reproducible output
 - Responsive interface ready for static deployment on Vercel
 
 ## Privacy
 
-The web builder runs entirely in the browser. CV data is stored only in the current browser's local storage and is never uploaded by this project. Clearing browser storage removes the saved draft.
+CV content, generated documents, and saved drafts remain in the browser. Drafts are stored in local storage and can be removed by clearing the browser's site data. The hosted application includes Vercel Web Analytics, but the application does not attach CV form values or generated document content to analytics events.
 
-## Use the web builder locally
+## Run locally
 
-Requirements: Node.js 20 or newer.
+[Create a fork](https://github.com/hgunduzoglu/cv-template/fork) on GitHub, then clone it locally. Node.js 20 or newer is required.
 
 ```bash
+git clone https://github.com/<your-github-username>/cv-template.git
+cd cv-template
 npm install
 npm run dev
 ```
@@ -41,16 +44,16 @@ npm run build
 
 The static output is written to `dist/`.
 
-## Deploy to Vercel
+## Deploy your own instance to Vercel
 
-1. Push this repository to GitHub.
-2. Import the repository in Vercel.
-3. Keep the detected Vite settings, or use:
+1. [Fork this repository](https://github.com/hgunduzoglu/cv-template/fork) to your GitHub account.
+2. Import the fork into a new Vercel project.
+3. Keep Vercel's detected Vite settings, or configure:
    - Build command: `npm run build`
    - Output directory: `dist`
-4. Deploy.
+4. Deploy the project.
 
-No environment variables, API keys, backend, or database are required.
+No environment variables, API keys, backend, or database are required. Vercel Web Analytics support is already included in the application; follow Vercel's [Web Analytics quickstart](https://vercel.com/docs/analytics/quickstart) to enable it for the new project.
 
 ## Use the Typst template directly
 
@@ -153,6 +156,18 @@ Always test the final PDF with the specific application system you plan to use. 
 
 The bundled fonts are distributed under the SIL Open Font License 1.1. Their copyright notices and license text are included in [`fonts/LICENSES.md`](fonts/LICENSES.md).
 
+## Issues and contributions
+
+Bug reports, feature requests, accessibility improvements, documentation corrections, and other constructive suggestions are welcome. Please [open a GitHub issue](https://github.com/hgunduzoglu/cv-template/issues/new) with a clear description, expected behavior, and reproduction steps where applicable.
+
+Code contributions are also welcome. To propose a change:
+
+1. Fork the repository and create a focused branch.
+2. Implement the change without adding personal CV data to the public example.
+3. Run `npm run check` and confirm that the generated PDF remains valid.
+4. [Open a pull request](https://github.com/hgunduzoglu/cv-template/pulls) describing the motivation, implementation, and any visible behavior changes.
+
+Keeping pull requests focused and reviewable makes them easier to discuss, test, and merge.
 
 ## License
 
